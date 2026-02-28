@@ -1,21 +1,26 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { aiTools as initialAiTools, AITool } from '../data/aiTools';
+import { aiPrompts as initialPrompts, AIPrompt } from '../data/prompts';
 
 interface AppContextType {
   theme: 'light' | 'dark';
   toggleTheme: () => void;
   isAdmin: boolean;
-  login: (password: string) => boolean;
+  login: (password: string) => Promise<boolean>;
   logout: () => void;
   aiTools: AITool[];
-  addTool: (tool: AITool) => void;
-  updateTool: (id: string, tool: AITool) => void;
-  deleteTool: (id: string) => void;
+  prompts: AIPrompt[];
+  addTool: (tool: Partial<AITool>) => Promise<void>;
+  updateTool: (id: string, tool: Partial<AITool>) => Promise<void>;
+  deleteTool: (id: string, db_id?: number) => Promise<void>;
+  addPrompt: (prompt: Partial<AIPrompt>) => Promise<void>;
+  updatePrompt: (id: string, prompt: Partial<AIPrompt>) => Promise<void>;
+  deletePrompt: (id: string, db_id?: number) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const ADMIN_PASSWORD = 'admin123'; // Simple password for demo
+const API_URL = 'http://localhost:5000/api';
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -24,35 +29,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   });
 
   const [isAdmin, setIsAdmin] = useState(() => {
-    return localStorage.getItem('isAdmin') === 'true';
+    return !!localStorage.getItem('token');
   });
 
-  const [aiTools, setAiTools] = useState<AITool[]>(() => {
-    const saved = localStorage.getItem('aiTools');
-    if (!saved) return initialAiTools;
-
-    try {
-      const savedTools: AITool[] = JSON.parse(saved);
-      // Merge: keep saved tools but update them if initial data has new fields
-      return initialAiTools.map(initialTool => {
-        const savedTool = savedTools.find(t => t.id === initialTool.id);
-        if (savedTool) {
-          // Build merged tool: prioritize initialTool's imageUrl if it exists
-          return {
-            ...initialTool,
-            ...savedTool,
-            imageUrl: initialTool.imageUrl || savedTool.imageUrl
-          };
-        }
-        return initialTool;
-      }).concat(
-        // Add tools that are only in saved state (manually added via Admin)
-        savedTools.filter(st => !initialAiTools.some(it => it.id === st.id))
-      );
-    } catch (e) {
-      return initialAiTools;
-    }
-  });
+  const [aiTools, setAiTools] = useState<AITool[]>([]);
+  const [prompts, setPrompts] = useState<AIPrompt[]>([]);
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
@@ -63,38 +44,152 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [theme]);
 
+  // Fetch initial data
+  const fetchData = async () => {
+    try {
+      const toolRes = await fetch(`${API_URL}/ais`);
+      const toolData = await toolRes.json();
+
+      const promptRes = await fetch(`${API_URL}/prompts`);
+      const promptData = await promptRes.json();
+
+      if (toolData.length === 0) {
+        // Seed database if empty
+        await fetch(`${API_URL}/seed`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ais: initialAiTools, prompts: initialPrompts })
+        });
+        // Refetch after seed
+        const newToolRes = await fetch(`${API_URL}/ais`);
+        const newToolData = await newToolRes.json();
+        setAiTools(newToolData);
+
+        const newPromptRes = await fetch(`${API_URL}/prompts`);
+        const newPromptData = await newPromptRes.json();
+        setPrompts(newPromptData);
+      } else {
+        setAiTools(toolData);
+        setPrompts(promptData);
+      }
+    } catch (err) {
+      console.error("Failed to fetch data", err);
+      // Fallback to static data if backend is offline
+      setAiTools(initialAiTools);
+      setPrompts(initialPrompts);
+    }
+  };
+
   useEffect(() => {
-    localStorage.setItem('aiTools', JSON.stringify(aiTools));
-  }, [aiTools]);
+    fetchData();
+  }, []);
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  const login = (password: string) => {
-    if (password === ADMIN_PASSWORD) {
-      setIsAdmin(true);
-      localStorage.setItem('isAdmin', 'true');
-      return true;
+  const login = async (password: string) => {
+    try {
+      const res = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: 'admindepa', password })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('token', data.token);
+        setIsAdmin(true);
+        return true;
+      }
+    } catch (err) {
+      console.error("Login failed", err);
     }
     return false;
   };
 
   const logout = () => {
     setIsAdmin(false);
-    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('token');
   };
 
-  const addTool = (tool: AITool) => {
-    setAiTools(prev => [...prev, tool]);
+  const getHeaders = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  });
+
+  const addTool = async (tool: Partial<AITool>) => {
+    const res = await fetch(`${API_URL}/ais`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(tool)
+    });
+    if (res.ok) {
+      fetchData();
+    }
   };
 
-  const updateTool = (id: string, updatedTool: AITool) => {
-    setAiTools(prev => prev.map(tool => tool.id === id ? updatedTool : tool));
+  const updateTool = async (id: string, updatedTool: Partial<AITool>) => {
+    // find db_id if any (we stored it inside description dynamically sometimes, or injected in GET)
+    const existing = aiTools.find(t => t.id === id);
+    const dbId = (existing as any)?.db_id || id;
+
+    const res = await fetch(`${API_URL}/ais/${dbId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updatedTool)
+    });
+    if (res.ok) {
+      fetchData();
+    }
   };
 
-  const deleteTool = (id: string) => {
-    setAiTools(prev => prev.filter(tool => tool.id !== id));
+  const deleteTool = async (id: string, db_id?: number) => {
+    const existing = aiTools.find(t => t.id === id);
+    const dbId = db_id || (existing as any)?.db_id || id;
+    const res = await fetch(`${API_URL}/ais/${dbId}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    if (res.ok) {
+      fetchData();
+    }
+  };
+
+  const addPrompt = async (prompt: Partial<AIPrompt>) => {
+    const res = await fetch(`${API_URL}/prompts`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(prompt)
+    });
+    if (res.ok) {
+      fetchData();
+    }
+  };
+
+  const updatePrompt = async (id: string, updatedPrompt: Partial<AIPrompt>) => {
+    const existing = prompts.find(p => p.id === id);
+    const dbId = (existing as any)?.db_id || id;
+    const res = await fetch(`${API_URL}/prompts/${dbId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updatedPrompt)
+    });
+    if (res.ok) {
+      fetchData();
+    }
+  };
+
+  const deletePrompt = async (id: string, db_id?: number) => {
+    const existing = prompts.find(p => p.id === id);
+    const dbId = db_id || (existing as any)?.db_id || id;
+    const res = await fetch(`${API_URL}/prompts/${dbId}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    if (res.ok) {
+      fetchData();
+    }
   };
 
   return (
@@ -106,9 +201,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         aiTools,
+        prompts,
         addTool,
         updateTool,
         deleteTool,
+        addPrompt,
+        updatePrompt,
+        deletePrompt
       }}
     >
       {children}

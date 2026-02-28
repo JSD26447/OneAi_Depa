@@ -17,9 +17,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   if (!isOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = login(password);
+    const success = await login(password);
     if (success) {
       setPassword('');
       setError('');
@@ -108,7 +108,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <div>
                     <input
                       type="password"
-                      placeholder="รหัสผ่าน (admin123)"
+                      placeholder="รหัสผ่าน"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 text-[#0C2F53] dark:text-white focus:outline-none focus:border-[#0C2F53] transition-colors font-bold"

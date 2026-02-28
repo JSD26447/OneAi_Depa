@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import { Search, Copy, Check, MessageSquareCode, Settings, Menu } from 'lucide-react';
-import { aiPrompts } from '../data/prompts';
 import Sidebar from '../components/Sidebar';
 import { SettingsModal } from '../components/SettingsModal';
 import { Link } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
 
 export default function PromptsPage() {
+    const { prompts } = useApp();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -13,7 +14,7 @@ export default function PromptsPage() {
     const [copiedId, setCopiedId] = useState<string | null>(null);
 
     const filteredPrompts = useMemo(() => {
-        let filtered = aiPrompts;
+        let filtered = prompts;
         if (selectedCategory) {
             filtered = filtered.filter(p => p.category === selectedCategory);
         }

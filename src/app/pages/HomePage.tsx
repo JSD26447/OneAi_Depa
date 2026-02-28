@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Menu,
@@ -17,6 +17,7 @@ import {
   Palette,
   Wand2,
   FileStack,
+  ExternalLink,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { SettingsModal } from '../components/SettingsModal';
@@ -42,15 +43,33 @@ export default function HomePage() {
   const { aiTools } = useApp();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  // ... (useMemo remains same)
+  useEffect(() => {
+    setSelectedSubCategory(null);
+  }, [selectedCategory]);
+
+  const subCategories = useMemo(() => {
+    if (!selectedCategory) return [];
+    const toolsInCategory = aiTools.filter(tool => tool.category === selectedCategory);
+    const subs = toolsInCategory.flatMap(tool => tool.subCategories || []).filter(Boolean);
+    return Array.from(new Set(subs));
+  }, [selectedCategory, aiTools]);
+
   const filteredTools = useMemo(() => {
     let filtered = aiTools;
+
+    // Check if any filter is active
+    const isFiltered = selectedCategory || selectedSubCategory || searchQuery.trim();
+
     if (selectedCategory) {
       filtered = filtered.filter(tool => tool.category === selectedCategory);
+    }
+    if (selectedSubCategory) {
+      filtered = filtered.filter(tool => tool.subCategories?.includes(selectedSubCategory));
     }
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -60,8 +79,23 @@ export default function HomePage() {
         tool.tagline.toLowerCase().includes(query)
       );
     }
+
+    // Hide duplicates if no filter is active
+    if (!isFiltered) {
+      const seenNames = new Set<string>();
+      filtered = filtered.filter(tool => {
+        // Normalize name to handle cases like "Gemini" and "Gemini (Google)"
+        const baseName = tool.name.replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
+        if (seenNames.has(baseName)) {
+          return false;
+        }
+        seenNames.add(baseName);
+        return true;
+      });
+    }
+
     return filtered;
-  }, [selectedCategory, searchQuery, aiTools]);
+  }, [selectedCategory, selectedSubCategory, searchQuery, aiTools]);
 
   const difficultyColors = {
     Beginner: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
@@ -198,17 +232,34 @@ export default function HomePage() {
         <main className="flex-1 p-6 lg:p-8">
           <div className="max-w-6xl mx-auto">
             {/* Results Header */}
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {selectedCategory
-                  ? sidebarCategories.find(c => c.id === selectedCategory)?.name
-                  : searchQuery
-                    ? `ผลการค้นหาสำหรับ "${searchQuery}"`
-                    : 'เครื่องมือ AI ทั้งหมด'}
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                พบ {filteredTools.length} เครื่องมือ
-              </p>
+            <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {selectedCategory
+                    ? sidebarCategories.find(c => c.id === selectedCategory)?.name
+                    : searchQuery
+                      ? `ผลการค้นหาสำหรับ "${searchQuery}"`
+                      : 'เครื่องมือ AI ทั้งหมด'}
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                  พบ {filteredTools.length} เครื่องมือ
+                </p>
+              </div>
+
+              {subCategories.length > 0 && (
+                <div className="w-full sm:w-auto">
+                  <select
+                    className="w-full sm:w-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-[#0C2F53] focus:border-transparent outline-none cursor-pointer shadow-sm font-medium"
+                    value={selectedSubCategory || ''}
+                    onChange={(e) => setSelectedSubCategory(e.target.value || null)}
+                  >
+                    <option value="">กิจกรรมทั้งหมด</option>
+                    {subCategories.map(sub => (
+                      <option key={sub} value={sub}>{sub}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* Tool Cards Grid */}
@@ -230,7 +281,7 @@ export default function HomePage() {
                           <img
                             src={tool.imageUrl}
                             alt={`${tool.name} logo`}
-                            className="w-full h-full object-cover cursor-pointer hover:scale-110 transition-transform"
+                            className="w-full h-full object-contain p-2 cursor-pointer hover:scale-110 transition-transform"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -248,11 +299,7 @@ export default function HomePage() {
                       </h3>
                       <p className="text-gray-600 dark:text-gray-400 mb-4">{tool.description}</p>
 
-                      {/* Best For */}
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">เหมาะสำหรับ:</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{tool.bestFor.join(', ')}</p>
-                      </div>
+
 
                       {/* Badges */}
                       <div className="flex flex-wrap gap-2 mb-4">
@@ -270,10 +317,19 @@ export default function HomePage() {
                         </span>
                       </div>
 
-                      <div className="mt-auto">
+                      <div className="mt-auto flex flex-col gap-3">
+                        <a
+                          href={tool.officialWebsite}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center w-full gap-2 bg-white dark:bg-gray-800 text-[#0C2F53] dark:text-[#FFF200] border-2 border-[#0C2F53] dark:border-[#FFF200]/50 py-3 rounded-2xl hover:bg-[#0C2F53]/5 dark:hover:bg-[#FFF200]/10 hover:shadow-lg transition-all font-bold group"
+                        >
+                          เข้าสู่เว็บไซต์
+                          <ExternalLink className="w-4 h-4 group-hover:scale-125 transition-transform" />
+                        </a>
                         <Link
                           to={`/tool/${tool.id}`}
-                          className="flex items-center justify-center w-full gap-2 bg-[#0C2F53] text-[#FFF200] py-4 rounded-2xl hover:bg-[#0C2F53]/90 hover:shadow-lg transition-all font-bold group"
+                          className="flex items-center justify-center w-full gap-2 bg-[#0C2F53] text-[#FFF200] py-3 rounded-2xl hover:bg-[#0C2F53]/90 hover:shadow-lg transition-all font-bold group"
                         >
                           อ่านข้อมูลเพิ่มเติม
                           <Sparkles className="w-4 h-4 group-hover:scale-125 transition-transform" />

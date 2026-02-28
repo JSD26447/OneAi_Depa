@@ -11,7 +11,10 @@ import {
     Code,
     Lightbulb,
     Menu,
-    X
+    X,
+    Users,
+    Palette,
+    Map
 } from 'lucide-react';
 import { categories } from '../data/aiTools';
 import { promptCategories } from '../data/prompts';
@@ -31,6 +34,9 @@ const iconMap: Record<string, any> = {
     Briefcase,
     Code,
     Lightbulb,
+    Users,
+    Palette,
+    Map
 };
 
 export default function Sidebar({ open, onClose, selectedCategory, onCategoryClick, type }: SidebarProps) {
@@ -100,8 +106,8 @@ export default function Sidebar({ open, onClose, selectedCategory, onCategoryCli
                                             }`}
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className={`p-2 rounded-xl transition-colors ${isActive ? 'bg-white/10' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-[#FFF200]/20'}`}>
-                                                <Icon className={`w-4 h-4 ${isActive ? 'text-[#FFF200]' : 'text-slate-400 group-hover:text-[#0C2F53] dark:group-hover:text-[#FFF200]'}`} />
+                                            <div className={`p-2.5 rounded-full transition-colors ${isActive ? 'bg-white/10' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-[#FFF200]/20'}`}>
+                                                <Icon className={`w-4 h-4 ${isActive ? 'text-[#FFF200]' : 'text-slate-500 group-hover:text-[#0C2F53] dark:group-hover:text-[#FFF200]'}`} />
                                             </div>
                                             <span className={`text-sm font-bold tracking-tight ${isActive ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>
                                                 {category.name}

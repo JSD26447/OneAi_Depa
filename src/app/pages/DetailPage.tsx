@@ -126,19 +126,7 @@ export default function DetailPage() {
           </ul>
         </section>
 
-        {/* Who This AI Is Best For */}
-        <section className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 p-8 mb-8 shadow-sm">
-          <h2 className="text-2xl font-bold text-[#0C2F53] dark:text-white mb-6">
-            เหมาะกับใครบ้าง
-          </h2>
-          <div className="flex flex-wrap gap-4">
-            {tool.whoItsFor.map((person, index) => (
-              <div key={index} className="px-6 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-2xl text-slate-700 dark:text-slate-300 font-semibold shadow-sm">
-                {person}
-              </div>
-            ))}
-          </div>
-        </section>
+
 
         {/* How to Use This AI */}
         <section className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 p-8 mb-8 shadow-sm">
