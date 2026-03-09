@@ -16,8 +16,7 @@ import {
     Palette,
     Map
 } from 'lucide-react';
-import { categories } from '../data/aiTools';
-import { promptCategories } from '../data/prompts';
+import { useApp } from '../context/AppContext';
 
 interface SidebarProps {
     open: boolean;
@@ -41,7 +40,8 @@ const iconMap: Record<string, any> = {
 
 export default function Sidebar({ open, onClose, selectedCategory, onCategoryClick, type }: SidebarProps) {
     const location = useLocation();
-    const currentCategories = type === 'tools' ? categories : promptCategories;
+    const { categories: allCategories } = useApp();
+    const currentCategories = allCategories.filter((c: any) => c.type === (type === 'tools' ? 'ai' : 'prompt'));
     const [isChildVisible, setIsChildVisible] = useState(true);
 
     return (
@@ -89,15 +89,15 @@ export default function Sidebar({ open, onClose, selectedCategory, onCategoryCli
                         </div>
 
                         <nav className="space-y-2">
-                            {currentCategories.map((category) => {
+                            {currentCategories.map((category: any) => {
                                 const Icon = iconMap[category.icon] || Lightbulb;
-                                const isActive = selectedCategory === category.id;
+                                const isActive = selectedCategory === category.category_id;
 
                                 return (
                                     <button
                                         key={category.id}
                                         onClick={() => {
-                                            onCategoryClick(category.id);
+                                            onCategoryClick(category.category_id);
                                             if (window.innerWidth < 1024) onClose();
                                         }}
                                         className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all duration-300 group ${isActive

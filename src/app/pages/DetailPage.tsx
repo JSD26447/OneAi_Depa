@@ -1,11 +1,11 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, CheckCircle2, Sparkles } from 'lucide-react';
+import { ArrowLeft, ExternalLink, CheckCircle2, Sparkles, Settings, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function DetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { aiTools } = useApp();
+  const { aiTools, categories } = useApp();
   const tool = aiTools.find(t => t.id === id);
 
   if (!tool) {
@@ -84,6 +84,18 @@ export default function DetailPage() {
             >
               {priceLabels[tool.price]}
             </span>
+            <span className="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
+              {categories.find((c: any) => c.category_id === tool.category)?.name || tool.category}
+            </span>
+            {tool.categoryIds?.map(catId => {
+              if (catId === tool.category) return null;
+              const catName = categories.find((c: any) => c.category_id === catId)?.name || catId;
+              return (
+                <span key={catId} className="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                  {catName}
+                </span>
+              );
+            })}
           </div>
 
           <div className="flex flex-col md:flex-row items-center md:items-start gap-8 relative z-10">
@@ -176,13 +188,53 @@ export default function DetailPage() {
         </section>
 
         {/* Pricing Details */}
-        <section className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            ราคา
+        <section className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 p-8 mb-8 shadow-sm">
+          <h2 className="text-2xl font-bold text-[#0C2F53] dark:text-white mb-4">
+            แพ็กเกจ & ราคา (รายเดือน)
           </h2>
-          <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+          <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed mb-6">
             {tool.pricingDetails}
           </p>
+
+          {tool.plans && tool.plans.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {tool.plans.map((plan, idx) => (
+                <div key={idx} className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex flex-col hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-lg font-bold text-[#0C2F53] dark:text-white">{plan.name}</h3>
+                    <span className="px-3 py-1 bg-[#FFF200]/20 text-[#0C2F53] dark:bg-[#FFF200]/10 dark:text-[#FFF200] font-bold rounded-lg text-sm">{plan.price}</span>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-400 font-medium mb-4 flex-1">{plan.features}</p>
+
+                  <div className="mt-auto pt-4 border-t border-slate-200 dark:border-slate-700">
+                    {plan.forOrg === true ? (
+                      <span className="text-green-600 dark:text-emerald-400 font-bold text-sm flex items-center gap-2">
+                        <CheckCircle2 className="w-5 h-5 bg-green-100 dark:bg-emerald-900/50 rounded-full p-0.5 flex-shrink-0" /> เหมาะสำหรับองค์กร
+                      </span>
+                    ) : plan.forOrg === 'warning' ? (
+                      <span className="text-amber-600 dark:text-amber-400 font-bold text-sm flex items-center gap-2">
+                        <Settings className="w-5 h-5 bg-amber-100 dark:bg-amber-900/50 rounded-full p-0.5 flex-shrink-0" /> ส่วนตัว / ทีมขนาดเล็ก
+                      </span>
+                    ) : (
+                      <span className="text-rose-500 dark:text-rose-400 font-bold text-sm flex items-center gap-2">
+                        <X className="w-5 h-5 bg-rose-100 dark:bg-rose-900/50 rounded-full p-0.5 flex-shrink-0" /> ไม่เหมาะกับองค์กร
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tool.orgSuitability && (
+            <div className="bg-gradient-to-r from-[#0C2F53] to-[#154677] text-white p-6 rounded-2xl flex items-start gap-4 shadow-lg border border-[#0C2F53]/20">
+              <span className="text-4xl leading-none flex-shrink-0" style={{ transform: 'rotate(10deg)' }}>💡</span>
+              <div>
+                <h4 className="text-[#FFF200] font-bold text-lg mb-1">คำแนะนำสำหรับองค์กร</h4>
+                <p className="text-white/90 font-medium leading-relaxed">{tool.orgSuitability}</p>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Call to Action */}

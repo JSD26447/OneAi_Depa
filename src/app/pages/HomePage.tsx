@@ -18,11 +18,43 @@ import {
   Wand2,
   FileStack,
   ExternalLink,
+  Filter,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { SettingsModal } from '../components/SettingsModal';
-import { categories as sidebarCategories } from '../data/aiTools';
 import Sidebar from '../components/Sidebar';
+
+const getDeveloper = (tool: any) => {
+  if (tool.provider && tool.provider !== 'อื่นๆ (Others)') return tool.provider;
+  if (tool.developer && tool.developer !== 'อื่นๆ (Others)') return tool.developer;
+
+  const name = tool.name.toLowerCase();
+  if (name.includes('chatgpt') || name.includes('sora') || name.includes('openai')) return 'OpenAI';
+  if (name.includes('gemini') || name.includes('veo') || name.includes('google')) return 'Google';
+  if (name.includes('copilot') || name.includes('microsoft')) return 'Microsoft';
+  if (name.includes('claude') || name.includes('anthropic')) return 'Anthropic';
+  if (name.includes('midjourney')) return 'Midjourney';
+  if (name.includes('runway')) return 'Runway AI';
+  if (name.includes('canva')) return 'Canva';
+  if (name.includes('gamma')) return 'Gamma';
+
+  const known: Record<string, string> = {
+    'grammarly': 'Grammarly',
+    'deepl write': 'DeepL',
+    'notion ai': 'Notion Labs',
+    'asana intelligence': 'Asana',
+    'suno': 'Suno AI',
+    'udio': 'Udio',
+    'otter.ai': 'Otter.ai',
+    'fireflies.ai': 'Fireflies.ai',
+    'copy.ai': 'Copy.ai',
+  };
+
+  for (const [key, dev] of Object.entries(known)) {
+    if (name.includes(key)) return dev;
+  }
+  return 'อื่นๆ (Others)';
+}
 
 const iconMap: Record<string, any> = {
   Image,
@@ -40,13 +72,19 @@ const iconMap: Record<string, any> = {
 };
 
 export default function HomePage() {
-  const { aiTools } = useApp();
+  const { aiTools, categories } = useApp();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
+  const [selectedDeveloper, setSelectedDeveloper] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
+  };
 
   useEffect(() => {
     setSelectedSubCategory(null);
@@ -54,7 +92,10 @@ export default function HomePage() {
 
   const subCategories = useMemo(() => {
     if (!selectedCategory) return [];
-    const toolsInCategory = aiTools.filter(tool => tool.category === selectedCategory);
+    const toolsInCategory = aiTools.filter(tool =>
+      tool.category === selectedCategory ||
+      (tool.categoryIds && tool.categoryIds.includes(selectedCategory))
+    );
     const subs = toolsInCategory.flatMap(tool => tool.subCategories || []).filter(Boolean);
     return Array.from(new Set(subs));
   }, [selectedCategory, aiTools]);
@@ -66,7 +107,10 @@ export default function HomePage() {
     const isFiltered = selectedCategory || selectedSubCategory || searchQuery.trim();
 
     if (selectedCategory) {
-      filtered = filtered.filter(tool => tool.category === selectedCategory);
+      filtered = filtered.filter(tool =>
+        tool.category === selectedCategory ||
+        (tool.categoryIds && tool.categoryIds.includes(selectedCategory))
+      );
     }
     if (selectedSubCategory) {
       filtered = filtered.filter(tool => tool.subCategories?.includes(selectedSubCategory));
@@ -96,6 +140,49 @@ export default function HomePage() {
 
     return filtered;
   }, [selectedCategory, selectedSubCategory, searchQuery, aiTools]);
+
+  const groupedToolsData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const groups: Record<string, typeof filteredTools> = {};
+
+    filteredTools.forEach((tool) => {
+      const dev = getDeveloper(tool);
+      counts[dev] = (counts[dev] || 0) + 1;
+    });
+
+    const others: typeof filteredTools = [];
+
+    filteredTools.forEach((tool) => {
+      const dev = getDeveloper(tool);
+      if (counts[dev] <= 1 && dev !== 'อื่นๆ (Others)') {
+        others.push(tool);
+      } else {
+        if (!groups[dev]) groups[dev] = [];
+        groups[dev].push(tool);
+      }
+    });
+
+    const sortedGroups = Object.entries(groups).sort((a, b) => {
+      if (a[0] === 'อื่นๆ (Others)') return 1;
+      if (b[0] === 'อื่นๆ (Others)') return -1;
+      return b[1].length - a[1].length;
+    });
+
+    if (others.length > 0) {
+      const othersIndex = sortedGroups.findIndex(g => g[0] === 'อื่นๆ (Others)');
+      if (othersIndex !== -1) {
+        sortedGroups[othersIndex][1].push(...others);
+      } else {
+        sortedGroups.push(['อื่นๆ (Others)', others]);
+      }
+    }
+
+    return sortedGroups;
+  }, [filteredTools]);
+
+  const developerOptions = useMemo(() => {
+    return ['All', ...groupedToolsData.map(([dev]) => dev)];
+  }, [groupedToolsData]);
 
   const difficultyColors = {
     Beginner: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
@@ -198,14 +285,14 @@ export default function HomePage() {
 
             <div className="max-w-3xl w-full relative group shadow-2xl">
               <div className="absolute inset-0 bg-[#FFF200] blur-xl opacity-20 group-focus-within:opacity-40 transition-opacity" />
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-400 group-focus-within:text-[#0C2F53] transition-colors z-10" />
               <input
                 type="text"
                 placeholder="Ex. Create a website, Build an app, or Generate images..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-16 pr-8 py-6 bg-white border-4 border-transparent focus:border-[#FFF200] rounded-2xl text-lg focus:outline-none text-[#0C2F53] placeholder:text-gray-400 transition-all font-black relative z-10"
+                className="w-full pr-16 pl-8 py-6 bg-white border-4 border-transparent focus:border-[#FFF200] rounded-2xl text-lg focus:outline-none text-[#0C2F53] placeholder:text-gray-400 transition-all font-black relative z-10"
               />
+              <Search className="absolute right-6 top-1/2 -translate-y-1/2 w-8 h-8 text-gray-400 group-focus-within:text-[#0C2F53] transition-colors z-20 cursor-pointer" />
             </div>
           </div>
         </div>
@@ -236,7 +323,7 @@ export default function HomePage() {
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   {selectedCategory
-                    ? sidebarCategories.find(c => c.id === selectedCategory)?.name
+                    ? categories.find((c: any) => c.category_id === selectedCategory)?.name
                     : searchQuery
                       ? `ผลการค้นหาสำหรับ "${searchQuery}"`
                       : 'เครื่องมือ AI ทั้งหมด'}
@@ -246,95 +333,176 @@ export default function HomePage() {
                 </p>
               </div>
 
-              {subCategories.length > 0 && (
-                <div className="w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                {/* Developer Filter Dropdown */}
+                <div className="relative group min-w-[200px] flex items-center">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
+                    <Filter className="w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                  </div>
                   <select
-                    className="w-full sm:w-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-[#0C2F53] focus:border-transparent outline-none cursor-pointer shadow-sm font-medium"
-                    value={selectedSubCategory || ''}
-                    onChange={(e) => setSelectedSubCategory(e.target.value || null)}
+                    value={selectedDeveloper}
+                    onChange={(e) => setSelectedDeveloper(e.target.value)}
+                    className="w-full sm:w-auto pl-10 pr-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl py-2.5 focus:ring-2 focus:ring-[#0C2F53] focus:border-transparent outline-none cursor-pointer shadow-sm font-medium appearance-none"
                   >
-                    <option value="">กิจกรรมทั้งหมด</option>
-                    {subCategories.map(sub => (
-                      <option key={sub} value={sub}>{sub}</option>
+                    {developerOptions.map((dev) => (
+                      <option key={dev} value={dev}>
+                        {dev === 'All' ? 'ดูผู้พัฒนาทั้งหมด' : dev}
+                      </option>
                     ))}
                   </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none z-10">
+                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
                 </div>
-              )}
+
+                {subCategories.length > 0 && (
+                  <div>
+                    <select
+                      className="w-full sm:w-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-[#0C2F53] focus:border-transparent outline-none cursor-pointer shadow-sm font-medium"
+                      value={selectedSubCategory || ''}
+                      onChange={(e) => setSelectedSubCategory(e.target.value || null)}
+                    >
+                      <option value="">กิจกรรมทั้งหมด</option>
+                      {subCategories.map(sub => (
+                        <option key={sub} value={sub}>{sub}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Tool Cards Grid */}
+            {/* Tool Cards Grid Grouped */}
             {filteredTools.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredTools.map((tool) => {
-                  const LogoIcon = tool.logo ? iconMap[tool.logo] : null;
+              <div className="space-y-16">
+                {groupedToolsData.map(([groupName, tools]) => {
+                  if (selectedDeveloper !== 'All' && selectedDeveloper !== groupName) return null;
+
+                  const isExpanded = expandedGroups[groupName];
+                  const visibleTools = isExpanded ? tools : tools.slice(0, 3);
+                  const hasMore = tools.length > 3;
+
                   return (
-                    <div
-                      key={tool.id}
-                      className="group bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col h-full"
-                    >
-                      {/* Logo (imageUrl > icon) */}
-                      <div
-                        className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 overflow-hidden shadow-inner ring-4 ring-slate-50 dark:ring-slate-900 ${tool.imageUrl ? 'bg-white' : 'bg-gradient-to-br from-[#FFF200] to-[#FFC600]'
-                          }`}
-                      >
-                        {tool.imageUrl ? (
-                          <img
-                            src={tool.imageUrl}
-                            alt={`${tool.name} logo`}
-                            className="w-full h-full object-contain p-2 cursor-pointer hover:scale-110 transition-transform"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setPreviewImage(tool.imageUrl || null);
-                            }}
-                            loading="lazy"
-                          />
-                        ) : LogoIcon ? (
-                          <LogoIcon className="w-8 h-8 text-[#0C2F53]" />
-                        ) : null}
-                      </div>
-
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                        {tool.name}
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-400 mb-4">{tool.description}</p>
-
-
-
-                      {/* Badges */}
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${difficultyColors[tool.difficulty]
-                            }`}
-                        >
-                          {difficultyLabels[tool.difficulty]}
-                        </span>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${priceColors[tool.price]
-                            }`}
-                        >
-                          {priceLabels[tool.price]}
+                    <div key={groupName}>
+                      <div className="flex items-center gap-3 mb-6 border-b-2 border-gray-100 dark:border-gray-800 pb-3 pl-2 relative">
+                        <div className="absolute left-0 bottom-3 top-0 w-1.5 bg-[#FFF200] rounded-full"></div>
+                        <h3 className="text-2xl font-black text-[#0C2F53] dark:text-[#FFF200] tracking-tight ml-3">
+                          {groupName}
+                        </h3>
+                        <span className="ml-auto bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 py-1.5 px-4 rounded-full text-sm font-bold border border-slate-200 dark:border-slate-700 shadow-sm">
+                          {tools.length} รายการ
                         </span>
                       </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {visibleTools.map((tool) => {
+                          const LogoIcon = tool.logo ? iconMap[tool.logo] : null;
+                          return (
+                            <div
+                              key={tool.id}
+                              className="group bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col h-full overflow-hidden"
+                            >
+                              {/* Logo Header Container (Full Width) */}
+                              <div
+                                className={`w-full h-48 relative flex items-center justify-center overflow-hidden border-b border-gray-100 dark:border-gray-700 ${tool.imageUrl ? 'bg-slate-50 dark:bg-slate-900/50' : 'bg-gradient-to-br from-[#FFF200] to-[#FFC600]'
+                                  }`}
+                              >
+                                {tool.imageUrl ? (
+                                  <img
+                                    src={tool.imageUrl}
+                                    alt={`${tool.name} logo`}
+                                    className="w-full h-full object-contain p-6 cursor-pointer hover:scale-110 transition-transform duration-300"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setPreviewImage(tool.imageUrl || null);
+                                    }}
+                                    loading="lazy"
+                                  />
+                                ) : LogoIcon ? (
+                                  <LogoIcon className="w-16 h-16 text-[#0C2F53]" />
+                                ) : null}
+                              </div>
 
-                      <div className="mt-auto flex flex-col gap-3">
-                        <a
-                          href={tool.officialWebsite}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center w-full gap-2 bg-white dark:bg-gray-800 text-[#0C2F53] dark:text-[#FFF200] border-2 border-[#0C2F53] dark:border-[#FFF200]/50 py-3 rounded-2xl hover:bg-[#0C2F53]/5 dark:hover:bg-[#FFF200]/10 hover:shadow-lg transition-all font-bold group"
-                        >
-                          เข้าสู่เว็บไซต์
-                          <ExternalLink className="w-4 h-4 group-hover:scale-125 transition-transform" />
-                        </a>
-                        <Link
-                          to={`/tool/${tool.id}`}
-                          className="flex items-center justify-center w-full gap-2 bg-[#0C2F53] text-[#FFF200] py-3 rounded-2xl hover:bg-[#0C2F53]/90 hover:shadow-lg transition-all font-bold group"
-                        >
-                          อ่านข้อมูลเพิ่มเติม
-                          <Sparkles className="w-4 h-4 group-hover:scale-125 transition-transform" />
-                        </Link>
+                              {/* Content Body Section */}
+                              <div className="p-6 flex flex-col flex-1">
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                                  {tool.name}
+                                </h3>
+                                <p className="text-gray-600 dark:text-gray-400 mb-4">{tool.description}</p>
+
+                                {/* Category Label */}
+                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                  <span className="px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl text-xs font-bold uppercase tracking-wider">
+                                    {categories.find((c: any) => c.category_id === tool.category)?.name || tool.category}
+                                  </span>
+                                  {tool.categoryIds?.map(catId => {
+                                    if (catId === tool.category) return null;
+                                    const catName = categories.find((c: any) => c.category_id === catId)?.name || catId;
+                                    return (
+                                      <span key={catId} className="px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl text-xs font-bold uppercase tracking-wider">
+                                        {catName}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+
+                                {/* Badges */}
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                  <span
+                                    className={`px-3 py-1 rounded-full text-xs font-medium ${difficultyColors[tool.difficulty]
+                                      }`}
+                                  >
+                                    {difficultyLabels[tool.difficulty]}
+                                  </span>
+                                  <span
+                                    className={`px-3 py-1 rounded-full text-xs font-medium ${priceColors[tool.price]
+                                      }`}
+                                  >
+                                    {priceLabels[tool.price]}
+                                  </span>
+                                </div>
+
+                                {/* Buttons Area */}
+                                <div className="mt-auto flex flex-col gap-3">
+                                  <a
+                                    href={tool.officialWebsite}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center w-full gap-2 bg-[#0C2F53] text-[#FFF200] py-3 rounded-2xl hover:bg-[#0C2F53]/90 hover:shadow-lg transition-all font-bold group"
+                                  >
+                                    เข้าสู่เว็บไซต์
+                                    <ExternalLink className="w-4 h-4 group-hover:scale-125 transition-transform" />
+                                  </a>
+                                  <Link
+                                    to={`/tool/${tool.id}`}
+                                    className="flex items-center justify-center w-full gap-2 bg-white dark:bg-gray-800 text-[#0C2F53] dark:text-[#FFF200] border-2 border-[#0C2F53] dark:border-[#FFF200]/50 py-3 rounded-2xl hover:bg-[#0C2F53]/5 dark:hover:bg-[#FFF200]/10 hover:shadow-lg transition-all font-bold group"
+                                  >
+                                    อ่านข้อมูลเพิ่มเติม
+                                    <Sparkles className="w-4 h-4 group-hover:scale-125 transition-transform" />
+                                  </Link>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
+
+                      {hasMore && (
+                        <div className="mt-6 text-center">
+                          <button
+                            onClick={() => toggleGroup(groupName)}
+                            className="inline-flex items-center gap-2 px-6 py-2.5 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-[#0C2F53] dark:hover:border-[#FFF200] text-[#0C2F53] dark:text-white rounded-full font-bold text-sm hover:shadow-md transition-all group"
+                          >
+                            {isExpanded ? (
+                              <>ย่อหน้าต่าง <X className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" /></>
+                            ) : (
+                              <>ดูเพิ่มเติม ({tools.length - 3}) <Menu className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" /></>
+                            )}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

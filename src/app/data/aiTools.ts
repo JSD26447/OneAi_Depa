@@ -4,6 +4,8 @@ export interface AITool {
   tagline: string;
   description: string;
   category: string;
+  provider?: string;
+  categoryIds?: string[];
   bestFor: string[];
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   price: 'Free' | 'Paid' | 'Free + Paid';
@@ -17,6 +19,15 @@ export interface AITool {
   logo?: string;
   imageUrl?: string;
   subCategories?: string[];
+  plans?: AIToolPlan[];
+  orgSuitability?: string;
+}
+
+export interface AIToolPlan {
+  name: string;
+  price: string;
+  forOrg: boolean | 'warning' | 'no';
+  features: string;
 }
 
 export const categories = [
@@ -46,11 +57,17 @@ export const aiTools: AITool[] = [
     pricingDetails: 'มีทั้งเวอร์ชันฟรี และแบบชำระเงินเพื่อความสามารถที่มากขึ้น (Advanced)',
     officialWebsite: 'https://gemini.google.com',
     logo: 'Scale',
-    imageUrl: '/images/gemini.png'
+    imageUrl: '/images/gemini.png',
+    plans: [
+      { name: 'Gemini (Free)', price: 'ฟรี', forOrg: 'no', features: 'ใช้งานแบบจำกัด' },
+      { name: 'Gemini Advanced', price: '~$20', forOrg: 'warning', features: 'มีความสามารถสูงขึ้น' }
+    ],
+    orgSuitability: 'องค์กรสามารถใช้เวอร์ชันฟรีได้ระดับหนึ่ง'
   },
   {
     id: 'doc-claude',
     name: 'Claude',
+    provider: 'Anthropic',
     tagline: 'วิเคราะห์และร่างโครงสร้างภาษา',
     description: 'ผู้ช่วย AI ที่โดดเด่นด้านภาษา ช่วยเขียนหนังสือส่งออกและวิเคราะห์เอกสารยาวเพื่อร่างสัญญา',
     category: 'document',
@@ -66,11 +83,19 @@ export const aiTools: AITool[] = [
     pricingDetails: 'มีทั้งเวอร์ชันฟรี และแบบ Pro',
     officialWebsite: 'https://claude.ai',
     logo: 'PenTool',
-    imageUrl: '/images/claude.jpg'
+    imageUrl: '/images/claude.jpg',
+    plans: [
+      { name: 'Free', price: 'ฟรี', forOrg: 'no', features: 'ใช้ Claude รุ่นพื้นฐาน' },
+      { name: 'Pro', price: '~$20', forOrg: 'warning', features: 'รุ่นแรงขึ้น' },
+      { name: 'Team', price: '~$25–30', forOrg: true, features: 'Workspace รวมทีม' },
+      { name: 'Enterprise', price: 'ติดต่อเซลส์', forOrg: true, features: 'Compliance, API scale' }
+    ],
+    orgSuitability: 'องค์กรสามารถใช้ Team หรือ Enterprise'
   },
   {
     id: 'doc-email-chatgpt',
     name: 'ChatGPT',
+    provider: 'OpenAI',
     tagline: 'ร่างเนื้อหาในอีเมล',
     description: 'ช่วยร่างข้อความอีเมลได้อย่างคล่องแคล่ว พร้อมปรับเปลี่ยนน้ำเสียงที่ต้องการ',
     category: 'document',
@@ -86,7 +111,13 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ใช้งานฟรีด้วยโมเดลมาตรฐาน',
     officialWebsite: 'https://chat.openai.com',
     logo: 'Mail',
-    imageUrl: '/images/chatGPT.png'
+    imageUrl: '/images/chatGPT.png',
+    plans: [
+      { name: 'Free', price: 'ฟรี', forOrg: 'no', features: 'GPT พื้นฐาน, จำกัดการใช้งาน' },
+      { name: 'Plus', price: '~$20', forOrg: 'warning', features: 'GPT รุ่นใหม่กว่า, เร็วขึ้น' },
+      { name: 'Team', price: '~$25–30', forOrg: true, features: 'แชร์ workspace, admin control' }
+    ],
+    orgSuitability: 'ถ้าทำระบบองค์กร → ใช้ Team หรือ Enterprise'
   },
   {
     id: 'doc-email-copilot',
@@ -106,11 +137,18 @@ export const aiTools: AITool[] = [
     pricingDetails: 'รวมอยู่ในโดเมนหรือต้องซื้อเพิ่มจาก Office/Windows',
     officialWebsite: 'https://copilot.microsoft.com',
     logo: 'Mail',
-    imageUrl: '/images/copilot.png'
+    imageUrl: '/images/copilot.png',
+    plans: [
+      { name: 'Copilot Pro', price: '~$20', forOrg: 'warning', features: 'ส่วนบุคคล' },
+      { name: 'Microsoft 365 Copilot', price: '~$30', forOrg: true, features: 'ใช้ใน Word, Excel, Teams' },
+      { name: 'Enterprise', price: 'รวมใน Microsoft 365 E3/E5', forOrg: true, features: 'Security / Compliance' }
+    ],
+    orgSuitability: 'ถ้าองค์กรใช้ Microsoft 365 → Copilot ดีที่สุด'
   },
   {
     id: 'doc-check-grammarly',
     name: 'Grammarly',
+    provider: 'Other',
     tagline: 'ตรวจเช็คความถูกต้อง',
     description: 'ตรวจสอบการสะกดคำ ไวยากรณ์ และเกลาประโยคภาษาอังกฤษ',
     category: 'document',
@@ -126,7 +164,13 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ตรวจตัวสะกดพื้นฐานฟรี ฟีเจอร์ระดับสูงและเกลาประโยคต้องสมัครสมาชิก',
     officialWebsite: 'https://www.grammarly.com',
     logo: 'CheckCircle2',
-    imageUrl: '/images/grammarly.png'
+    imageUrl: '/images/grammarly.png',
+    plans: [
+      { name: 'Free', price: 'ฟรี', forOrg: 'no', features: 'ใช้งานเบื้องต้น' },
+      { name: 'Premium', price: '~$12', forOrg: 'warning', features: 'ใช้งานส่วนบุคคล' },
+      { name: 'Business', price: '~$15–25', forOrg: true, features: 'สำหรับการใช้งานองค์กร' }
+    ],
+    orgSuitability: 'องค์กรใช้ Business ได้'
   },
   {
     id: 'doc-check-deeplwrite',
@@ -146,7 +190,13 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ใช้ฟรีได้ในจำนวนตัวอักษรที่จำกัด',
     officialWebsite: 'https://www.deepl.com/write',
     logo: 'CheckCircle2',
-    imageUrl: '/images/DeepL Write.png'
+    imageUrl: '/images/DeepL Write.png',
+    plans: [
+      { name: 'Free', price: 'ฟรี จำกัด', forOrg: 'no', features: 'จำกัดปริมาณคำ' },
+      { name: 'Pro', price: '~$8–15', forOrg: 'warning', features: 'ใช้งานไม่จำกัด' },
+      { name: 'Business', price: 'มีแพ็กเกจทีม', forOrg: true, features: 'แพ็กเกจสำหรับทีม' }
+    ],
+    orgSuitability: 'องค์กรใช้ได้ มีแพ็กเกจทีมรองรับ'
   },
 
   // Meeting
@@ -168,7 +218,13 @@ export const aiTools: AITool[] = [
     pricingDetails: 'เป็นส่วนหนึ่งของการสมัครใช้งานขององค์กรแบบมีค่าใช้จ่าย',
     officialWebsite: 'https://copilot.microsoft.com',
     logo: 'Calendar',
-    imageUrl: '/images/copilot.png'
+    imageUrl: '/images/copilot.png',
+    plans: [
+      { name: 'Copilot Pro', price: '~$20', forOrg: 'warning', features: 'ส่วนบุคคล' },
+      { name: 'Microsoft 365 Copilot', price: '~$30', forOrg: true, features: 'ใช้ใน Word, Excel, Teams' },
+      { name: 'Enterprise', price: 'รวมใน Microsoft 365 E3/E5', forOrg: true, features: 'Security / Compliance' }
+    ],
+    orgSuitability: 'ถ้าองค์กรใช้ Microsoft 365 → Copilot ดีที่สุด'
   },
   {
     id: 'meet-agenda-notion',
@@ -188,7 +244,12 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ต้องสมัคร Notion AI แบบเสียเงินเพิ่มเติม',
     officialWebsite: 'https://www.notion.so/product/ai',
     logo: 'Calendar',
-    imageUrl: '/images/NotionAI.jpg'
+    imageUrl: '/images/NotionAI.jpg',
+    plans: [
+      { name: 'Notion AI', price: 'ฟรีจำกัด', forOrg: 'warning', features: 'ใช้งานแบบจำกัด' },
+      { name: 'Paid', price: '~$8–10', forOrg: true, features: 'ใช้งานได้เต็มรูปแบบ' }
+    ],
+    orgSuitability: 'องค์กรใช้ได้ทั้งหมด'
   },
   {
     id: 'meet-record-fireflies',
@@ -208,7 +269,12 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ทดลองฟรีได้จำกัด หลังจากนั้นอัปเกรดเป็นพรีเมียม',
     officialWebsite: 'https://fireflies.ai',
     logo: 'Mic',
-    imageUrl: '/images/Fireflies.png'
+    imageUrl: '/images/Fireflies.png',
+    plans: [
+      { name: 'Free', price: 'ฟรีจำกัด', forOrg: 'warning', features: 'ถอดบทความจำกัด' },
+      { name: 'Paid', price: '~$10–19', forOrg: true, features: 'สำหรับการใช้งานองค์กรเต็มรูปแบบ' }
+    ],
+    orgSuitability: 'องค์กรใช้ได้ทั้งหมด'
   },
   {
     id: 'meet-record-otter',
@@ -228,7 +294,12 @@ export const aiTools: AITool[] = [
     pricingDetails: 'มีแผนใช้งานฟรีแบบจำกัดชั่วโมง/เดือน',
     officialWebsite: 'https://otter.ai',
     logo: 'Mic',
-    imageUrl: '/images/Otterai.jpg'
+    imageUrl: '/images/Otterai.jpg',
+    plans: [
+      { name: 'Free', price: 'ฟรีจำกัด', forOrg: 'warning', features: 'ใช้งานจำกัด' },
+      { name: 'Paid', price: '~$16+', forOrg: true, features: 'สำหรับการใช้งานองค์กรและทีม' }
+    ],
+    orgSuitability: 'องค์กรใช้ได้ทั้งหมด'
   },
   {
     id: 'meet-summary-gemini',
@@ -248,7 +319,12 @@ export const aiTools: AITool[] = [
     pricingDetails: 'สามารถใช้ร่วมกันแบบฟรี',
     officialWebsite: 'https://gemini.google.com',
     logo: 'FileText',
-    imageUrl: '/images/gemini.png'
+    imageUrl: '/images/gemini.png',
+    plans: [
+      { name: 'Gemini (Free)', price: 'ฟรี', forOrg: 'no', features: 'ใช้งานแบบจำกัด' },
+      { name: 'Gemini Advanced', price: '~$20', forOrg: 'warning', features: 'มีความสามารถสูงขึ้น' }
+    ],
+    orgSuitability: 'องค์กรสามารถใช้เวอร์ชันฟรีได้ระดับหนึ่ง'
   },
   {
     id: 'meet-chatgpt',
@@ -268,7 +344,13 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ใช้งานโครงสร้างพื้นฐานได้ฟรี',
     officialWebsite: 'https://chat.openai.com',
     logo: 'Megaphone',
-    imageUrl: '/images/chatGPT.png'
+    imageUrl: '/images/chatGPT.png',
+    plans: [
+      { name: 'Free', price: 'ฟรี', forOrg: 'no', features: 'GPT พื้นฐาน, จำกัดการใช้งาน' },
+      { name: 'Plus', price: '~$20', forOrg: 'warning', features: 'GPT รุ่นใหม่กว่า, เร็วขึ้น' },
+      { name: 'Team', price: '~$25–30', forOrg: true, features: 'แชร์ workspace, admin control' }
+    ],
+    orgSuitability: 'ถ้าทำระบบองค์กร → ใช้ Team หรือ Enterprise'
   },
   {
     id: 'meet-news-claude',
@@ -288,7 +370,14 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ใช้งานฟรีได้แบบจำกัดโควตา',
     officialWebsite: 'https://claude.ai',
     logo: 'Megaphone',
-    imageUrl: '/images/claude.jpg'
+    imageUrl: '/images/claude.jpg',
+    plans: [
+      { name: 'Free', price: 'ฟรี', forOrg: 'no', features: 'ใช้ Claude รุ่นพื้นฐาน' },
+      { name: 'Pro', price: '~$20', forOrg: 'warning', features: 'รุ่นแรงขึ้น' },
+      { name: 'Team', price: '~$25–30', forOrg: true, features: 'Workspace รวมทีม' },
+      { name: 'Enterprise', price: 'ติดต่อเซลส์', forOrg: true, features: 'Compliance, API scale' }
+    ],
+    orgSuitability: 'องค์กรสามารถใช้ Team หรือ Enterprise'
   },
   {
     id: 'meet-news-copyai',
@@ -330,7 +419,14 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ต้องเสียเงินรายเดือน',
     officialWebsite: 'https://www.midjourney.com/',
     logo: 'Image',
-    imageUrl: '/images/mid-journey.png'
+    imageUrl: '/images/mid-journey.png',
+    plans: [
+      { name: 'ไม่มีระดับฟรี', price: '❌', forOrg: 'no', features: 'ต้องสมัครสมาชิก' },
+      { name: 'Basic', price: '~$10', forOrg: 'warning', features: 'ใช้สำหรับบุคคลทั่วไป' },
+      { name: 'Standard', price: '~$30', forOrg: 'warning', features: 'ระดับปานกลาง' },
+      { name: 'Pro', price: '~$60', forOrg: true, features: 'ใช้ทีมได้' }
+    ],
+    orgSuitability: 'ใช้ทีมได้ แต่ไม่มี Enterprise เต็มรูปแบบ'
   },
   {
     id: 'creative-img-nanobanana',
@@ -390,7 +486,11 @@ export const aiTools: AITool[] = [
     pricingDetails: 'สำหรับผู้มีสิทธิการใช้งานระดับพรีเมียม',
     officialWebsite: 'https://openai.com/sora',
     logo: 'Video',
-    imageUrl: '/images/sora openai.png'
+    imageUrl: '/images/sora openai.png',
+    plans: [
+      { name: 'สถานะ', price: 'ยังจำกัด', forOrg: 'warning', features: 'เปิดให้กับผู้เข้าถึงส่วนหนึ่ง' },
+      { name: 'ราคา', price: 'ยังไม่เปิด public เต็ม', forOrg: 'warning', features: 'รอการเปิดใช้งานเต็มรูปแบบ' }
+    ]
   },
   {
     id: 'creative-video-runway',
@@ -410,7 +510,14 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ได้รับเครดิตการสร้างฟรี จากนั้นต้องซื้อแพ็กเกจ',
     officialWebsite: 'https://runwayml.com/',
     logo: 'Video',
-    imageUrl: '/images/runway.png'
+    imageUrl: '/images/runway.png',
+    plans: [
+      { name: 'Free', price: 'มีจำกัด', forOrg: 'no', features: 'ใช้งานแบบมีข้อจำกัด' },
+      { name: 'Standard', price: '~$15', forOrg: 'warning', features: 'ตัดต่อระดับเบื้องต้น' },
+      { name: 'Pro', price: '~$35', forOrg: 'warning', features: 'การทำงานที่มีคุณภาพขึ้น' },
+      { name: 'Enterprise', price: 'ติดต่อเซลส์', forOrg: true, features: 'สำหรับการใช้งานระบบองค์กร' }
+    ],
+    orgSuitability: 'องค์กรใช้ได้'
   },
   {
     id: 'creative-pres-gamma',
@@ -429,7 +536,7 @@ export const aiTools: AITool[] = [
     difficultyExplanation: 'ระบบทำให้แทบทั้งหมด คุณแค่เข้าไปแต่งสี ปรับคำเพิ่มนิดหน่อย',
     pricingDetails: 'ฟรีสำหรับการใช้งานเบื้องต้น มีแบบ Pro สำหรับฟีเจอร์พรีเมียม',
     officialWebsite: 'https://gamma.app/',
-    logo: 'Airplay', // Changed from Airplay to something else? Wait, Airplay wasn't imported. Let me check iconMap.
+    logo: 'Airplay',
     imageUrl: '/images/Gamma.png'
   },
   {
@@ -450,7 +557,13 @@ export const aiTools: AITool[] = [
     pricingDetails: 'เชื่อมต่อรวมในบัญชี Canva โปรแกรมพรีเมียม',
     officialWebsite: 'https://www.canva.com/',
     logo: 'Palette',
-    imageUrl: '/images/canva magic design.png'
+    imageUrl: '/images/canva magic design.png',
+    plans: [
+      { name: 'Free', price: 'ฟรี', forOrg: 'no', features: 'ใช้งานแบบจำกัด' },
+      { name: 'Pro', price: '~$12', forOrg: 'warning', features: 'พรีเมียมส่วนบุคคล' },
+      { name: 'Teams', price: '~$15', forOrg: true, features: 'สำหรับการใช้งานร่วมกันเป็นทีม' }
+    ],
+    orgSuitability: 'องค์กรควรใช้แพลน Teams'
   },
   {
     id: 'creative-music-suno',
@@ -469,7 +582,7 @@ export const aiTools: AITool[] = [
     difficultyExplanation: 'ทำได้ง่ายมากๆ ใช้งานผ่านเว็บหรือแอปสื่อได้เลย',
     pricingDetails: 'มีสิทธิ์การใช้งานรายวันฟรี การพาณิชย์ต้องดูแพ็กเกจโอนสิทธิ์',
     officialWebsite: 'https://suno.com/',
-    logo: 'Music', // Music icon? Not in iconMap. Let's make sure whatever it was is ok. Wait, earlier it was 'Music'? Let me check the view file.
+    logo: 'Music',
     imageUrl: '/images/Suno.png'
   },
   {
@@ -512,7 +625,12 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ใช้งานได้ฟรี',
     officialWebsite: 'https://gemini.google.com',
     logo: 'ListTodo',
-    imageUrl: '/images/gemini.png'
+    imageUrl: '/images/gemini.png',
+    plans: [
+      { name: 'Gemini (Free)', price: 'ฟรี', forOrg: 'no', features: 'ใช้งานแบบจำกัด' },
+      { name: 'Gemini Advanced', price: '~$20', forOrg: 'warning', features: 'มีความสามารถสูงขึ้น' }
+    ],
+    orgSuitability: 'องค์กรสามารถใช้เวอร์ชันฟรีได้ระดับหนึ่ง'
   },
   {
     id: 'plan-act-chatgpt',
@@ -532,7 +650,13 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ใช้ฟังก์ชันนี้ในเวอร์ชันฟรีได้ครบถ้วน',
     officialWebsite: 'https://chat.openai.com',
     logo: 'ListTodo',
-    imageUrl: '/images/chatGPT.png'
+    imageUrl: '/images/chatGPT.png',
+    plans: [
+      { name: 'Free', price: 'ฟรี', forOrg: 'no', features: 'GPT พื้นฐาน, จำกัดการใช้งาน' },
+      { name: 'Plus', price: '~$20', forOrg: 'warning', features: 'GPT รุ่นใหม่กว่า, เร็วขึ้น' },
+      { name: 'Team', price: '~$25–30', forOrg: true, features: 'แชร์ workspace, admin control' }
+    ],
+    orgSuitability: 'ถ้าทำระบบองค์กร → ใช้ Team หรือ Enterprise'
   },
   {
     id: 'plan-timeline-notion',
@@ -552,7 +676,12 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ฟีเจอร์ AI เป็น Add-on ที่ต้องชำระเพิ่มรายเดือน',
     officialWebsite: 'https://www.notion.so/product/ai',
     logo: 'Kanban',
-    imageUrl: '/images/NotionAI.jpg'
+    imageUrl: '/images/NotionAI.jpg',
+    plans: [
+      { name: 'Notion AI', price: 'ฟรีจำกัด', forOrg: 'warning', features: 'ใช้งานแบบจำกัด' },
+      { name: 'Paid', price: '~$8–10', forOrg: true, features: 'เพิ่มฟีเจอร์ AI ให้หน้าเอกสาร' }
+    ],
+    orgSuitability: 'องค์กรใช้ได้ทั้งหมด'
   },
   {
     id: 'plan-timeline-asana',
@@ -572,6 +701,10 @@ export const aiTools: AITool[] = [
     pricingDetails: 'เป็นส่วนเสริมระดับที่ต้องชำระค่าใช้งานตามจำนวน User',
     officialWebsite: 'https://asana.com',
     logo: 'Kanban',
-    imageUrl: '/images/Logo-Asana.png'
+    imageUrl: '/images/Logo-Asana.png',
+    plans: [
+      { name: 'Asana Intelligence', price: '~$25+', forOrg: true, features: 'รวมอยู่ในแพ็กเกจ Business' }
+    ],
+    orgSuitability: 'องค์กรใช้ได้ทั้งหมด'
   }
 ];

@@ -11,6 +11,7 @@ interface SettingsModalProps {
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { theme, toggleTheme, isAdmin, login, logout } = useApp();
   const [showLoginForm, setShowLoginForm] = useState(false);
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -19,15 +20,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await login(password);
+    const success = await login(username, password);
     if (success) {
+      setUsername('');
       setPassword('');
       setError('');
       setShowLoginForm(false);
       onClose();
       navigate('/admin');
     } else {
-      setError('Incorrect password');
+      setError('Incorrect username or password');
     }
   };
 
@@ -105,17 +107,24 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </button>
               ) : (
                 <form onSubmit={handleLogin} className="space-y-4">
-                  <div>
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="ชื่อผู้ใช้"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 text-[#0C2F53] dark:text-white focus:outline-none focus:border-[#0C2F53] transition-colors font-bold"
+                      autoFocus
+                    />
                     <input
                       type="password"
                       placeholder="รหัสผ่าน"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 text-[#0C2F53] dark:text-white focus:outline-none focus:border-[#0C2F53] transition-colors font-bold"
-                      autoFocus
                     />
                     {error && (
-                      <p className="text-red-500 text-sm mt-2 font-semibold">รหัสผ่านไม่ถูกต้อง!</p>
+                      <p className="text-red-500 text-sm font-semibold">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!</p>
                     )}
                   </div>
                   <div className="flex gap-3">
@@ -130,6 +139,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       onClick={() => {
                         setShowLoginForm(false);
                         setError('');
+                        setUsername('');
                         setPassword('');
                       }}
                       className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-4 rounded-2xl hover:bg-slate-200 transition-all font-bold"

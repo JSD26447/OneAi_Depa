@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 export default function PromptsPage() {
-    const { prompts } = useApp();
+    const { prompts, aiTools, categories } = useApp();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -16,7 +16,10 @@ export default function PromptsPage() {
     const filteredPrompts = useMemo(() => {
         let filtered = prompts;
         if (selectedCategory) {
-            filtered = filtered.filter(p => p.category === selectedCategory);
+            filtered = filtered.filter(p =>
+                p.category === selectedCategory ||
+                (p.categoryIds && p.categoryIds.includes(selectedCategory))
+            );
         }
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
@@ -112,14 +115,14 @@ export default function PromptsPage() {
 
                         <div className="max-w-3xl w-full relative group shadow-2xl">
                             <div className="absolute inset-0 bg-[#FFF200] blur-xl opacity-20 group-focus-within:opacity-40 transition-opacity" />
-                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-400 group-focus-within:text-[#0C2F53] transition-colors z-10" />
                             <input
                                 type="text"
                                 placeholder="ค้นหาคำสั่ง (Prompts) เช่น สร้างภาพ, เขียนบทความ..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-16 pr-8 py-6 bg-white border-4 border-transparent focus:border-[#FFF200] rounded-2xl text-lg focus:outline-none text-[#0C2F53] placeholder:text-gray-400 transition-all font-black relative z-10"
+                                className="w-full pr-16 pl-8 py-6 bg-white border-4 border-transparent focus:border-[#FFF200] rounded-2xl text-lg focus:outline-none text-[#0C2F53] placeholder:text-gray-400 transition-all font-black relative z-10"
                             />
+                            <Search className="absolute right-6 top-1/2 -translate-y-1/2 w-8 h-8 text-gray-400 group-focus-within:text-[#0C2F53] transition-colors z-20 cursor-pointer" />
                         </div>
                     </div>
                 </div>
@@ -146,47 +149,103 @@ export default function PromptsPage() {
                     <div className="max-w-6xl mx-auto">
                         <div className="grid grid-cols-1 gap-6">
                             {filteredPrompts.length > 0 ? (
-                                filteredPrompts.map((p) => (
-                                    <div
-                                        key={p.id}
-                                        className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group"
-                                    >
-                                        <div className="p-6 md:p-8">
-                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                                                <div>
-                                                    <h3 className="text-2xl font-black text-[#0C2F53] dark:text-white mb-2">{p.title}</h3>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {p.tags.map(tag => (
-                                                            <span key={tag} className="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-bold uppercase tracking-wider">
-                                                                {tag}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    onClick={() => handleCopy(p.id, p.prompt)}
-                                                    className={`flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${copiedId === p.id
-                                                        ? 'bg-green-500 text-white'
-                                                        : 'bg-[#0C2F53] text-[#FFF200] hover:bg-[#0C2F53]/90'
-                                                        }`}
-                                                >
-                                                    {copiedId === p.id ? (
-                                                        <><Check className="w-5 h-5" /> Copied!</>
-                                                    ) : (
-                                                        <><Copy className="w-5 h-5" /> Copy Prompt</>
-                                                    )}
-                                                </button>
-                                            </div>
+                                filteredPrompts.map((p) => {
+                                    // หาชื่อหมวดหมู่ที่ตรงกันจาก list ของ category ฝั่ง database
+                                    const catName = categories.find((c: any) => c.category_id === p.category)?.name || p.category;
 
-                                            <div className="relative group">
-                                                <div className="absolute inset-0 bg-[#0C2F53] rounded-2xl opacity-0 group-hover:opacity-[0.02] transition-opacity" />
-                                                <pre className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl text-slate-700 dark:text-slate-300 font-mono text-sm whitespace-pre-wrap border border-slate-100 dark:border-slate-800">
-                                                    {p.prompt}
-                                                </pre>
+                                    return (
+                                        <div
+                                            key={p.id}
+                                            className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group"
+                                        >
+                                            <div className="p-6 md:p-8">
+                                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                                    <div>
+                                                        <h3 className="text-2xl font-black text-[#0C2F53] dark:text-white mb-2">{p.title}</h3>
+                                                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                            <span className="px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl text-xs font-bold uppercase tracking-wider">
+                                                                {catName}
+                                                            </span>
+                                                            {p.categoryIds?.map(catId => {
+                                                                if (catId === p.category) return null;
+                                                                const additionalCatName = categories.find((c: any) => c.category_id === catId)?.name || catId;
+                                                                return (
+                                                                    <span key={catId} className="px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl text-xs font-bold uppercase tracking-wider">
+                                                                        {additionalCatName}
+                                                                    </span>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {p.tags.map(tag => {
+                                                                const matchedTool = aiTools.find(
+                                                                    tool => tool.name.toLowerCase().includes(tag.toLowerCase()) ||
+                                                                        tag.toLowerCase().includes(tool.name.toLowerCase())
+                                                                );
+
+                                                                const getFallbackUrl = (t: string) => {
+                                                                    const lowerT = t.toLowerCase();
+                                                                    if (lowerT.includes('midjourney')) return 'https://www.midjourney.com/';
+                                                                    if (lowerT.includes('stable diffusion')) return 'https://stability.ai/';
+                                                                    if (lowerT.includes('chatgpt')) return 'https://chat.openai.com/';
+                                                                    if (lowerT.includes('gemini')) return 'https://gemini.google.com/';
+                                                                    if (lowerT.includes('claude')) return 'https://claude.ai/';
+                                                                    if (lowerT.includes('copilot')) return 'https://copilot.microsoft.com/';
+                                                                    if (lowerT.includes('perplexity')) return 'https://www.perplexity.ai/';
+                                                                    if (lowerT.includes('github') || lowerT.includes('copilot')) return 'https://github.com/features/copilot';
+                                                                    return null;
+                                                                };
+
+                                                                const targetUrl = matchedTool?.officialWebsite || getFallbackUrl(tag);
+
+                                                                if (targetUrl) {
+                                                                    return (
+                                                                        <a
+                                                                            key={tag}
+                                                                            href={targetUrl}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            title={`ไปยังเว็บไซต์ ${tag}`}
+                                                                            className="px-3 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-blue-900/40 text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 rounded-full text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer inline-flex items-center"
+                                                                        >
+                                                                            {tag}
+                                                                        </a>
+                                                                    );
+                                                                }
+
+                                                                return (
+                                                                    <span key={tag} className="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-bold uppercase tracking-wider">
+                                                                        {tag}
+                                                                    </span>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleCopy(p.id, p.prompt)}
+                                                        className={`flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${copiedId === p.id
+                                                            ? 'bg-green-500 text-white'
+                                                            : 'bg-[#0C2F53] text-[#FFF200] hover:bg-[#0C2F53]/90'
+                                                            }`}
+                                                    >
+                                                        {copiedId === p.id ? (
+                                                            <><Check className="w-5 h-5" /> Copied!</>
+                                                        ) : (
+                                                            <><Copy className="w-5 h-5" /> Copy Prompt</>
+                                                        )}
+                                                    </button>
+                                                </div>
+
+                                                <div className="relative group">
+                                                    <div className="absolute inset-0 bg-[#0C2F53] rounded-2xl opacity-0 group-hover:opacity-[0.02] transition-opacity" />
+                                                    <pre className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl text-slate-700 dark:text-slate-300 font-mono text-sm whitespace-pre-wrap border border-slate-100 dark:border-slate-800">
+                                                        {p.prompt}
+                                                    </pre>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))
+                                    )
+                                })
                             ) : (
                                 <div className="text-center py-20">
                                     <div className="bg-slate-100 dark:bg-slate-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">

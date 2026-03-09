@@ -4,6 +4,7 @@ export interface AIPrompt {
     title: string;
     prompt: string;
     category: string;
+    categoryIds?: string[];
     tags: string[];
 }
 

@@ -6,7 +6,7 @@ interface AppContextType {
   theme: 'light' | 'dark';
   toggleTheme: () => void;
   isAdmin: boolean;
-  login: (password: string) => Promise<boolean>;
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   aiTools: AITool[];
   prompts: AIPrompt[];
@@ -16,6 +16,10 @@ interface AppContextType {
   addPrompt: (prompt: Partial<AIPrompt>) => Promise<void>;
   updatePrompt: (id: string, prompt: Partial<AIPrompt>) => Promise<void>;
   deletePrompt: (id: string, db_id?: number) => Promise<void>;
+  categories: any[];
+  addCategory: (category: any) => Promise<void>;
+  updateCategory: (id: string, category: any) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -34,6 +38,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [aiTools, setAiTools] = useState<AITool[]>([]);
   const [prompts, setPrompts] = useState<AIPrompt[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
@@ -53,6 +58,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const promptRes = await fetch(`${API_URL}/prompts`);
       const promptData = await promptRes.json();
 
+      let catData = [];
+      try {
+        const catRes = await fetch(`${API_URL}/categories`);
+        catData = await catRes.json();
+      } catch (e) {
+        console.error("Failed to fetch categories", e);
+      }
+
       if (toolData.length === 0) {
         // Seed database if empty
         await fetch(`${API_URL}/seed`, {
@@ -68,9 +81,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const newPromptRes = await fetch(`${API_URL}/prompts`);
         const newPromptData = await newPromptRes.json();
         setPrompts(newPromptData);
+        setCategories(catData);
       } else {
         setAiTools(toolData);
         setPrompts(promptData);
+        setCategories(catData);
       }
     } catch (err) {
       console.error("Failed to fetch data", err);
@@ -88,12 +103,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  const login = async (password: string) => {
+  const login = async (username: string, password: string) => {
     try {
       const res = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'admindepa', password })
+        body: JSON.stringify({ username, password })
       });
 
       if (res.ok) {
@@ -192,6 +207,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addCategory = async (category: any) => {
+    const res = await fetch(`${API_URL}/categories`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(category)
+    });
+    if (res.ok) {
+      fetchData();
+    }
+  };
+
+  const updateCategory = async (id: string, category: any) => {
+    const res = await fetch(`${API_URL}/categories/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(category)
+    });
+    if (res.ok) {
+      fetchData();
+    }
+  };
+
+  const deleteCategory = async (id: string) => {
+    const res = await fetch(`${API_URL}/categories/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    if (res.ok) {
+      fetchData();
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -207,7 +254,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         deleteTool,
         addPrompt,
         updatePrompt,
-        deletePrompt
+        deletePrompt,
+        categories,
+        addCategory,
+        updateCategory,
+        deleteCategory
       }}
     >
       {children}
