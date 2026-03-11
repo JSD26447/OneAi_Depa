@@ -24,6 +24,7 @@ interface SidebarProps {
     selectedCategory: string | null;
     onCategoryClick: (id: string) => void;
     type: 'tools' | 'prompts';
+    itemCount?: number;
 }
 
 const iconMap: Record<string, any> = {
@@ -38,7 +39,7 @@ const iconMap: Record<string, any> = {
     Map
 };
 
-export default function Sidebar({ open, onClose, selectedCategory, onCategoryClick, type }: SidebarProps) {
+export default function Sidebar({ open, onClose, selectedCategory, onCategoryClick, type, itemCount }: SidebarProps) {
     const location = useLocation();
     const { categories: allCategories } = useApp();
     const currentCategories = allCategories.filter((c: any) => c.type === (type === 'tools' ? 'ai' : 'prompt'));
@@ -76,10 +77,24 @@ export default function Sidebar({ open, onClose, selectedCategory, onCategoryCli
                 <div className={`bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-inner overflow-y-auto transition-all duration-300 ${isChildVisible ? 'w-72 opacity-100' : 'w-0 opacity-0 pointer-events-none'}`}>
                     <div className="p-6 w-72">
                         <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                                <span className="w-6 h-[2px] bg-[#FFF200]"></span>
-                                {type === 'tools' ? 'Tools Categories' : 'Prompt Topics'}
-                            </h2>
+                            <div className="flex flex-col gap-2">
+                                <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    <span className="w-6 h-[2px] bg-[#FFF200]"></span>
+                                    {type === 'tools' ? 'Tools Categories' : 'Prompt Topics'}
+                                </h2>
+                                {itemCount !== undefined && (
+                                    <div className="ml-8 inline-flex items-center gap-2.5 px-3.5 py-1.5 bg-slate-50/80 dark:bg-slate-800/40 backdrop-blur-md rounded-full w-max border border-slate-200/80 dark:border-slate-700/60 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)] transition-all duration-300 hover:bg-white dark:hover:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md cursor-default group relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
+                                        <div className="relative flex h-2 w-2 items-center justify-center">
+                                            <div className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-ping"></div>
+                                            <div className="relative inline-flex rounded-full h-[6px] w-[6px] bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
+                                        </div>
+                                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 tracking-wide relative z-10">
+                                            พบ <span className="font-black text-slate-900 dark:text-white text-[13px] mx-0.5">{itemCount}</span> {type === 'tools' ? 'เครื่องมือ' : 'คำสั่ง'}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
                             <button
                                 onClick={onClose}
                                 className="lg:hidden p-2 text-slate-400 hover:text-slate-600 transition-colors"

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, Copy, Check, MessageSquareCode, Settings, Menu } from 'lucide-react';
+import { Search, Copy, Check, MessageSquareCode, Settings, Menu, PenTool } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { SettingsModal } from '../components/SettingsModal';
 import { Link } from 'react-router-dom';
@@ -26,7 +26,9 @@ export default function PromptsPage() {
             filtered = filtered.filter(p =>
                 p.title.toLowerCase().includes(q) ||
                 p.prompt.toLowerCase().includes(q) ||
-                p.tags.some(t => t.toLowerCase().includes(q))
+                (p.tags && p.tags.some(t => t.toLowerCase().includes(q))) ||
+                (p.aiRecommendations && p.aiRecommendations.some(r => r.name.toLowerCase().includes(q))) ||
+                (p.author && p.author.toLowerCase().includes(q))
             );
         }
         return filtered;
@@ -135,6 +137,7 @@ export default function PromptsPage() {
                     selectedCategory={selectedCategory}
                     onCategoryClick={setSelectedCategory}
                     type="prompts"
+                    itemCount={filteredPrompts.length}
                 />
 
                 {/* Overlay for mobile */}
@@ -177,7 +180,20 @@ export default function PromptsPage() {
                                                             })}
                                                         </div>
                                                         <div className="flex flex-wrap gap-2">
-                                                            {p.tags.map(tag => {
+                                                            {p.aiRecommendations && p.aiRecommendations.length > 0 ? (
+                                                                p.aiRecommendations.map((rec, i) => (
+                                                                    <a
+                                                                        key={i}
+                                                                        href={rec.url ? (rec.url.startsWith('http') ? rec.url : `https://${rec.url}`) : '#'}
+                                                                        target={rec.url ? "_blank" : undefined}
+                                                                        rel="noopener noreferrer"
+                                                                        title={rec.url ? `ไปยังเว็บไซต์ ${rec.name}` : undefined}
+                                                                        className={`px-3 py-1 ${rec.url ? 'bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-blue-900/40 cursor-pointer' : 'bg-slate-100 dark:bg-slate-700 cursor-default'} text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 rounded-full text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center`}
+                                                                    >
+                                                                        {rec.name}
+                                                                    </a>
+                                                                ))
+                                                            ) : p.tags && p.tags.map(tag => {
                                                                 const matchedTool = aiTools.find(
                                                                     tool => tool.name.toLowerCase().includes(tag.toLowerCase()) ||
                                                                         tag.toLowerCase().includes(tool.name.toLowerCase())
@@ -220,6 +236,12 @@ export default function PromptsPage() {
                                                                 );
                                                             })}
                                                         </div>
+                                                        {p.author && (
+                                                            <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-semibold shadow-sm border border-indigo-100 dark:border-indigo-800/50">
+                                                                <PenTool className="w-3.5 h-3.5" />
+                                                                <span>โดย: {p.author}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <button
                                                         onClick={() => handleCopy(p.id, p.prompt)}

@@ -81,6 +81,7 @@ export default function HomePage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
   const toggleGroup = (groupName: string) => {
     setExpandedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
@@ -305,6 +306,7 @@ export default function HomePage() {
           selectedCategory={selectedCategory}
           onCategoryClick={setSelectedCategory}
           type="tools"
+          itemCount={filteredTools.length}
         />
 
         {/* Overlay for mobile */}
@@ -328,49 +330,67 @@ export default function HomePage() {
                       ? `ผลการค้นหาสำหรับ "${searchQuery}"`
                       : 'เครื่องมือ AI ทั้งหมด'}
                 </h2>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  พบ {filteredTools.length} เครื่องมือ
-                </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                {/* Developer Filter Dropdown */}
-                <div className="relative group min-w-[200px] flex items-center">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
-                    <Filter className="w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                  </div>
-                  <select
-                    value={selectedDeveloper}
-                    onChange={(e) => setSelectedDeveloper(e.target.value)}
-                    className="w-full sm:w-auto pl-10 pr-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl py-2.5 focus:ring-2 focus:ring-[#0C2F53] focus:border-transparent outline-none cursor-pointer shadow-sm font-medium appearance-none"
+              <div className="relative flex justify-end min-h-[40px] max-w-[340px] w-full mt-4 sm:mt-0 pointer-events-none">
+                <div
+                  className={`pointer-events-auto absolute right-0 top-0 flex items-center bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/10 transition-all duration-500 ease-in-out overflow-hidden shadow-sm ${isFilterExpanded
+                    ? "rounded-2xl w-full max-w-[340px]"
+                    : "rounded-full w-[40px] hover:bg-gray-50 dark:hover:bg-[#334155]"
+                    }`}
+                  style={{ height: '40px' }}
+                >
+                  <button
+                    onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                    className="absolute left-0 top-0 bottom-0 w-[40px] flex justify-center items-center text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer z-10 bg-transparent"
+                    aria-label="Toggle filters"
                   >
-                    {developerOptions.map((dev) => (
-                      <option key={dev} value={dev}>
-                        {dev === 'All' ? 'ดูผู้พัฒนาทั้งหมด' : dev}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none z-10">
-                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
+                    {isFilterExpanded ? <X className="w-4 h-4 transition-transform duration-300" /> : <Filter className="w-4 h-4 transition-transform duration-300" />}
+                  </button>
+
+                  <div
+                    className={`flex items-center gap-1 w-full pl-10 pr-2 h-full transition-opacity duration-300 whitespace-nowrap ${isFilterExpanded ? 'opacity-100 delay-200' : 'opacity-0 pointer-events-none'
+                      }`}
+                  >
+                    <div className="relative flex-1 h-full flex items-center">
+                      <select
+                        value={selectedDeveloper}
+                        onChange={(e) => setSelectedDeveloper(e.target.value)}
+                        className="appearance-none bg-transparent hover:bg-gray-50 dark:hover:bg-[#334155] rounded-md transition-colors text-gray-700 dark:text-gray-200 w-full py-1.5 pl-2 pr-6 text-sm focus:outline-none cursor-pointer truncate"
+                      >
+                        {developerOptions.map((dev) => (
+                          <option key={dev} value={dev} className="bg-white dark:bg-[#1e293b]">
+                            {dev === 'All' ? 'ผู้พัฒนาทั้งหมด' : dev}
+                          </option>
+                        ))}
+                      </select>
+                      <svg className="absolute right-1 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+
+                    {subCategories.length > 0 && (
+                      <>
+                        <div className="w-[1px] h-4 bg-gray-200 dark:bg-white/10 mx-0.5 flex-shrink-0" />
+                        <div className="relative w-[130px] h-full flex items-center">
+                          <select
+                            className="appearance-none bg-transparent hover:bg-gray-50 dark:hover:bg-[#334155] rounded-md transition-colors text-gray-700 dark:text-gray-200 w-full py-1.5 pl-2 pr-6 text-sm focus:outline-none cursor-pointer truncate"
+                            value={selectedSubCategory || ''}
+                            onChange={(e) => setSelectedSubCategory(e.target.value || null)}
+                          >
+                            <option value="" className="bg-white dark:bg-[#1e293b]">กิจกรรมทั้งหมด</option>
+                            {subCategories.map(sub => (
+                              <option key={sub} value={sub} className="bg-white dark:bg-[#1e293b]">{sub}</option>
+                            ))}
+                          </select>
+                          <svg className="absolute right-1 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
-
-                {subCategories.length > 0 && (
-                  <div>
-                    <select
-                      className="w-full sm:w-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-[#0C2F53] focus:border-transparent outline-none cursor-pointer shadow-sm font-medium"
-                      value={selectedSubCategory || ''}
-                      onChange={(e) => setSelectedSubCategory(e.target.value || null)}
-                    >
-                      <option value="">กิจกรรมทั้งหมด</option>
-                      {subCategories.map(sub => (
-                        <option key={sub} value={sub}>{sub}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -401,18 +421,28 @@ export default function HomePage() {
                           return (
                             <div
                               key={tool.id}
-                              className="group bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col h-full overflow-hidden"
+                              className={`group bg-white dark:bg-gray-800 rounded-3xl border-2 ${tool.isDepaRecommended ? 'border-[#FFF200] shadow-[0_0_15px_rgba(255,242,0,0.2)] dark:shadow-[0_0_15px_rgba(255,242,0,0.1)]' : 'border-transparent dark:border-transparent hover:border-gray-200 dark:hover:border-gray-700'} hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col h-full overflow-hidden relative`}
+                              style={!tool.isDepaRecommended ? { border: '1px solid var(--border-color, #e5e7eb)' } : {}}
                             >
+                              {tool.isDepaRecommended && (
+                                <div className="absolute top-3 right-3 z-20 pointer-events-none" title="DEPA Recommended">
+                                  <div className="relative">
+                                    <div className="absolute inset-0 bg-[#FFF200] blur-md opacity-60 rounded-full animate-pulse"></div>
+                                    <img src="/images/depa-badge.png" alt="DEPA Recommended" className="w-12 h-12 object-contain relative z-10 drop-shadow-xl hover:scale-110 transition-transform" />
+                                  </div>
+                                </div>
+                              )}
+
                               {/* Logo Header Container (Full Width) */}
                               <div
-                                className={`w-full h-48 relative flex items-center justify-center overflow-hidden border-b border-gray-100 dark:border-gray-700 ${tool.imageUrl ? 'bg-slate-50 dark:bg-slate-900/50' : 'bg-gradient-to-br from-[#FFF200] to-[#FFC600]'
-                                  }`}
+                                className={`w-full h-48 relative flex items-center justify-center overflow-hidden border-b ${tool.isDepaRecommended ? 'border-[#FFF200]/30' : 'border-gray-100 dark:border-gray-700'} ${tool.imageUrl ? 'bg-slate-50 dark:bg-slate-900/50' : 'bg-gradient-to-br from-[#FFF200] to-[#FFC600]'}
+                                  `}
                               >
                                 {tool.imageUrl ? (
                                   <img
                                     src={tool.imageUrl}
                                     alt={`${tool.name} logo`}
-                                    className="w-full h-full object-contain p-6 cursor-pointer hover:scale-110 transition-transform duration-300"
+                                    className="w-full h-full object-cover cursor-pointer hover:scale-110 transition-transform duration-300"
                                     onClick={(e) => {
                                       e.preventDefault();
                                       e.stopPropagation();

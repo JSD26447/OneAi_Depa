@@ -6,6 +6,8 @@ export interface AIPrompt {
     category: string;
     categoryIds?: string[];
     tags: string[];
+    author?: string;
+    aiRecommendations?: { name: string; url: string; }[];
 }
 
 export const promptCategories = [
@@ -23,6 +25,7 @@ export const aiPrompts: AIPrompt[] = [
         prompt: 'Cinematic shot of a futuristic Bangkok city, neon lights, rain, hyper-realistic, 8k resolution --ar 16:9',
         category: 'image-gen',
         tags: ['Midjourney', 'Stable Diffusion'],
+        author: 'สมชาย ครีเอเตอร์'
     },
     {
         id: 'p2',

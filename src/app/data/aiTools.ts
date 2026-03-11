@@ -21,6 +21,7 @@ export interface AITool {
   subCategories?: string[];
   plans?: AIToolPlan[];
   orgSuitability?: string;
+  isDepaRecommended?: boolean;
 }
 
 export interface AIToolPlan {

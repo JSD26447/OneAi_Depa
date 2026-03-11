@@ -33,6 +33,9 @@ export default function AdminPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isBulkSelectMode, setIsBulkSelectMode] = useState(false);
+  const [selectedPrompts, setSelectedPrompts] = useState<string[]>([]);
+  const [selectedTools, setSelectedTools] = useState<string[]>([]);
 
   const [toolFormData, setToolFormData] = useState<AITool>({
     id: '',
@@ -56,6 +59,7 @@ export default function AdminPage() {
     imageUrl: '',
     plans: [],
     orgSuitability: '',
+    isDepaRecommended: false,
   });
 
   const [promptFormData, setPromptFormData] = useState<AIPrompt>({
@@ -64,7 +68,9 @@ export default function AdminPage() {
     prompt: '',
     category: '',
     categoryIds: [],
-    tags: []
+    tags: [],
+    author: '',
+    aiRecommendations: []
   });
 
   const [categoryFormData, setCategoryFormData] = useState<any>({
@@ -149,6 +155,7 @@ export default function AdminPage() {
       imageUrl: '',
       plans: [],
       orgSuitability: '',
+      isDepaRecommended: false,
     });
     setEditingId(null);
     setShowForm(false);
@@ -164,7 +171,7 @@ export default function AdminPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/upload', {
+      const res = await fetch('http://10.0.63.134:5000/api/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -174,7 +181,7 @@ export default function AdminPage() {
 
       if (res.ok) {
         const data = await res.json();
-        const fullUrl = `http://localhost:5000${data.imageUrl}`;
+        const fullUrl = `http://10.0.63.134:5000${data.imageUrl}`;
         handleToolInputChange('imageUrl', fullUrl);
       } else {
         alert('Upload failed');
@@ -197,6 +204,28 @@ export default function AdminPage() {
     setPromptFormData(prev => ({ ...prev, [field]: items }));
   };
 
+  const handleAddAIRecommendation = () => {
+    setPromptFormData(prev => ({
+      ...prev,
+      aiRecommendations: [...(prev.aiRecommendations || []), { name: '', url: '' }]
+    }));
+  };
+
+  const handleRemoveAIRecommendation = (index: number) => {
+    setPromptFormData(prev => ({
+      ...prev,
+      aiRecommendations: (prev.aiRecommendations || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleAIRecommendationChange = (index: number, field: 'name' | 'url', value: string) => {
+    setPromptFormData(prev => {
+      const newRecs = [...(prev.aiRecommendations || [])];
+      newRecs[index] = { ...newRecs[index], [field]: value };
+      return { ...prev, aiRecommendations: newRecs };
+    });
+  };
+
   const resetPromptForm = () => {
     setPromptFormData({
       id: '',
@@ -204,7 +233,9 @@ export default function AdminPage() {
       prompt: '',
       category: '',
       categoryIds: [],
-      tags: []
+      tags: [],
+      author: '',
+      aiRecommendations: []
     });
     setEditingId(null);
     setShowForm(false);
@@ -278,9 +309,65 @@ export default function AdminPage() {
     }
   };
 
+  const handleBulkDeleteTools = async () => {
+    if (selectedTools.length === 0) return;
+    if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบเครื่องมือ AI จำนวน ${selectedTools.length} รายการที่เลือก?`)) {
+      // Loop through selected and delete
+      for (const id of selectedTools) {
+        const toolToDelete = aiTools.find(t => t.id === id);
+        if (toolToDelete) {
+          await deleteTool(id, (toolToDelete as any).db_id);
+        }
+      }
+      setSelectedTools([]); // Clear selection after delete
+    }
+  };
+
+  const toggleToolSelection = (id: string) => {
+    setSelectedTools(prev =>
+      prev.includes(id) ? prev.filter(tId => tId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAllTools = () => {
+    if (selectedTools.length === aiTools.length && aiTools.length > 0) {
+      setSelectedTools([]);
+    } else {
+      setSelectedTools(aiTools.map(t => t.id));
+    }
+  };
+
   const handleDeletePrompt = (id: string, db_id?: number) => {
     if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบคำสั่ง Prompt นี้?')) {
       deletePrompt(id, db_id);
+    }
+  };
+
+  const handleBulkDeletePrompts = async () => {
+    if (selectedPrompts.length === 0) return;
+    if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบคำสั่ง Prompt จำนวน ${selectedPrompts.length} รายการที่เลือก?`)) {
+      // Loop through selected and delete
+      for (const id of selectedPrompts) {
+        const promptToDelete = prompts.find(p => p.id === id);
+        if (promptToDelete) {
+          await deletePrompt(id, (promptToDelete as any).db_id);
+        }
+      }
+      setSelectedPrompts([]); // Clear selection after delete
+    }
+  };
+
+  const togglePromptSelection = (id: string) => {
+    setSelectedPrompts(prev =>
+      prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAllPrompts = () => {
+    if (selectedPrompts.length === prompts.length && prompts.length > 0) {
+      setSelectedPrompts([]);
+    } else {
+      setSelectedPrompts(prompts.map(p => p.id));
     }
   };
 
@@ -322,19 +409,34 @@ export default function AdminPage() {
               <div className="flex gap-4">
                 <div className="bg-white/10 rounded-xl p-1 flex">
                   <button
-                    onClick={() => setActiveTab('tools')}
+                    onClick={() => {
+                      setActiveTab('tools');
+                      setIsBulkSelectMode(false);
+                      setSelectedTools([]);
+                      setSelectedPrompts([]);
+                    }}
                     className={`px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 ${activeTab === 'tools' ? 'bg-white text-[#0C2F53] shadow-sm' : 'text-white/80 hover:bg-white/10'}`}
                   >
                     <LayoutGrid className="w-4 h-4" /> AI Tools ({aiTools.length})
                   </button>
                   <button
-                    onClick={() => setActiveTab('prompts')}
+                    onClick={() => {
+                      setActiveTab('prompts');
+                      setIsBulkSelectMode(false);
+                      setSelectedTools([]);
+                      setSelectedPrompts([]);
+                    }}
                     className={`px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 ${activeTab === 'prompts' ? 'bg-white text-[#0C2F53] shadow-sm' : 'text-white/80 hover:bg-white/10'}`}
                   >
                     <MessageSquareCode className="w-4 h-4" /> Prompts ({prompts.length})
                   </button>
                   <button
-                    onClick={() => setActiveTab('categories')}
+                    onClick={() => {
+                      setActiveTab('categories');
+                      setIsBulkSelectMode(false);
+                      setSelectedTools([]);
+                      setSelectedPrompts([]);
+                    }}
                     className={`px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 ${activeTab === 'categories' ? 'bg-white text-[#0C2F53] shadow-sm' : 'text-white/80 hover:bg-white/10'}`}
                   >
                     <Folder className="w-4 h-4" /> หมวดหมู่ ({categories.length})
@@ -472,13 +574,35 @@ export default function AdminPage() {
                             {isUploading ? 'กำลังอัปโหลด...' : <><ImageIcon className="w-5 h-5 mr-2" /> อัปโหลด</>}
                             <input
                               type="file"
-                              accept="image/*"
+                              accept="image/*, image/webp, .webp"
                               className="hidden"
                               onChange={handleImageUpload}
                               disabled={isUploading}
                             />
                           </label>
                         </div>
+                      </div>
+                      
+                      <div className="md:col-span-2">
+                        <label className="flex items-center space-x-3 bg-white dark:bg-gray-700 p-4 border-2 border-slate-200 dark:border-slate-600 rounded-xl cursor-pointer hover:border-[#FFF200] transition-all group shadow-sm">
+                          <div className="relative flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={toolFormData.isDepaRecommended || false}
+                              onChange={(e) => handleToolInputChange('isDepaRecommended', e.target.checked)}
+                              className="peer w-6 h-6 shrink-0 rounded border-2 border-slate-300 dark:border-slate-500 text-[#0C2F53] focus:ring-[#FFF200] focus:ring-offset-0 transition-all checked:border-[#0C2F53] dark:checked:border-[#FFF200]"
+                            />
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0 peer-checked:opacity-100 text-white dark:text-[#0C2F53]">
+                               <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                               </svg>
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-[#0C2F53] dark:group-hover:text-[#FFF200] transition-colors">DEPA Recommended</span>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">ระบุว่า AI ตัวนี้สามารถใช้กับบริษัทเราได้ (มีป้ายสถานะในการ์ด)</p>
+                          </div>
+                        </label>
                       </div>
                     </div>
                   </div>
@@ -913,7 +1037,78 @@ export default function AdminPage() {
                           type="text"
                           value={promptFormData.tags.join(', ')}
                           onChange={(e) => handlePromptArrayInput('tags', e.target.value)}
-                          placeholder="ChatGPT, Claude, Gemini"
+                          placeholder="Meeting, Minutes, Summary"
+                          className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+                            เครื่องมือ AI ที่แนะนำ (AI Recommendations)
+                          </label>
+                        </div>
+
+                        <div className="space-y-4">
+                          {(promptFormData.aiRecommendations || []).map((rec, index) => (
+                            <div key={index} className="bg-white dark:bg-gray-800 p-5 rounded-2xl relative border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col md:flex-row gap-4 items-start md:items-center">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveAIRecommendation(index)}
+                                className="absolute -top-3 -right-3 bg-red-50 dark:bg-red-900/30 text-red-500 hover:bg-red-500 hover:text-white border border-red-200 dark:border-red-800 rounded-full p-1.5 shadow-sm transition-all z-10"
+                                title="ลบ"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+
+                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-bold flex items-center justify-center border border-blue-200 dark:border-blue-800/50">
+                                {index + 1}
+                              </div>
+
+                              <div className="flex-1 w-full space-y-3">
+                                <div>
+                                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">ชื่อ AI ที่แนะนำ</label>
+                                  <input
+                                    type="text"
+                                    value={rec.name}
+                                    onChange={(e) => handleAIRecommendationChange(index, 'name', e.target.value)}
+                                    placeholder="เช่น ChatGPT"
+                                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-slate-50 dark:bg-gray-700/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">ลิงก์ (URL)</label>
+                                  <input
+                                    type="text"
+                                    value={rec.url}
+                                    onChange={(e) => handleAIRecommendationChange(index, 'url', e.target.value)}
+                                    placeholder="เช่น https://chatgpt.com"
+                                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-slate-50 dark:bg-gray-700/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+
+                          <button
+                            type="button"
+                            onClick={handleAddAIRecommendation}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-4 bg-transparent border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all font-bold"
+                          >
+                            <Plus className="w-5 h-5" /> เพิ่มช่องแนะนำ AI ใหม่
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                          ชื่อผู้แต่ง / ผู้สร้างสรรค์ (Author) <span className="text-gray-400 font-normal ml-1">(Optional)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={promptFormData.author || ''}
+                          onChange={(e) => handlePromptInputChange('author', e.target.value)}
+                          placeholder="ชื่อของคุณ หรือ นามปากกา เช่น John Doe"
                           className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
                         />
                       </div>
@@ -1050,18 +1245,111 @@ export default function AdminPage() {
         ) : (
           /* Tools / Prompts List */
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-              {activeTab === 'tools' ? `เครื่องมือ AI ทั้งหมด (${aiTools.length})` : `คำสั่ง Prompt ทั้งหมด (${prompts.length})`}
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                {activeTab === 'tools'
+                  ? `เครื่องมือ AI ทั้งหมด (${aiTools.length})`
+                  : activeTab === 'prompts'
+                    ? `คำสั่ง Prompt ทั้งหมด (${prompts.length})`
+                    : `หมวดหมู่ทั้งหมด (${categories.length})`
+                }
+              </h2>
+
+              <div className="flex gap-3">
+                {/* Toggle Bulk Select Mode Button */}
+                {(activeTab === 'tools' || activeTab === 'prompts') && (
+                  <button
+                    onClick={() => {
+                      setIsBulkSelectMode(!isBulkSelectMode);
+                      if (isBulkSelectMode) {
+                        setSelectedPrompts([]);
+                        setSelectedTools([]);
+                      }
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${isBulkSelectMode
+                      ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-400'
+                      : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700'
+                      } font-medium transition-all`}
+                  >
+                    <CheckSquare className="w-5 h-5" />
+                    {isBulkSelectMode ? 'ยกเลิกการเลือก' : 'เลือกหลายรายการ'}
+                  </button>
+                )}
+
+                {/* Bulk Action Buttons (Prompts) */}
+                {activeTab === 'prompts' && isBulkSelectMode && selectedPrompts.length > 0 && (
+                  <button
+                    onClick={handleBulkDeletePrompts}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl shadow-lg shadow-red-500/20 font-bold transition-all"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                    ลบที่เลือก ({selectedPrompts.length})
+                  </button>
+                )}
+
+                {/* Bulk Action Buttons (Tools) */}
+                {activeTab === 'tools' && isBulkSelectMode && selectedTools.length > 0 && (
+                  <button
+                    onClick={handleBulkDeleteTools}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl shadow-lg shadow-red-500/20 font-bold transition-all"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                    ลบที่เลือก ({selectedTools.length})
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Select All Toggle for Prompts Layer */}
+            {activeTab === 'prompts' && isBulkSelectMode && prompts.length > 0 && (
+              <div className="mb-4 flex items-center gap-3 px-6 py-3 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300">
+                <input
+                  type="checkbox"
+                  id="selectAllPrompts"
+                  checked={selectedPrompts.length === prompts.length}
+                  onChange={toggleSelectAllPrompts}
+                  className="w-5 h-5 rounded border-gray-300 text-[#0C2F53] focus:ring-[#0C2F53] dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
+                />
+                <label htmlFor="selectAllPrompts" className="text-sm font-bold text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                  เลือกคำสั่ง Prompt ทั้งหมด
+                </label>
+              </div>
+            )}
+
+            {/* Select All Toggle for Tools Layer */}
+            {activeTab === 'tools' && isBulkSelectMode && aiTools.length > 0 && (
+              <div className="mb-4 flex items-center gap-3 px-6 py-3 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300">
+                <input
+                  type="checkbox"
+                  id="selectAllTools"
+                  checked={selectedTools.length === aiTools.length}
+                  onChange={toggleSelectAllTools}
+                  className="w-5 h-5 rounded border-gray-300 text-[#0C2F53] focus:ring-[#0C2F53] dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
+                />
+                <label htmlFor="selectAllTools" className="text-sm font-bold text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                  เลือก AI Tools ทั้งหมด
+                </label>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 gap-6">
               {activeTab === 'tools' && aiTools.map((tool) => (
                 <div
                   key={tool.id}
-                  className="group bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all"
+                  className={`group bg-white dark:bg-gray-800 rounded-3xl border ${selectedTools.includes(tool.id) ? 'border-[#0C2F53] dark:border-[#FFF200] ring-2 ring-[#0C2F53]/10 dark:ring-[#FFF200]/10' : 'border-gray-200 dark:border-gray-700'} p-6 hover:shadow-xl transition-all relative`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-6">
+                      {isBulkSelectMode && (
+                        <div className="flex items-center justify-center flex-shrink-0">
+                          <input
+                            type="checkbox"
+                            checked={selectedTools.includes(tool.id)}
+                            onChange={() => toggleToolSelection(tool.id)}
+                            className="w-5 h-5 rounded border-gray-300 text-[#0C2F53] focus:ring-[#0C2F53] dark:bg-gray-700 dark:border-gray-600 cursor-pointer transition-all duration-300"
+                          />
+                        </div>
+                      )}
                       <div className="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-inner">
                         {tool.imageUrl ? (
                           <img src={tool.imageUrl} alt={tool.name} className="w-full h-full object-cover" />
@@ -1107,10 +1395,20 @@ export default function AdminPage() {
               {activeTab === 'prompts' && prompts.map((prompt) => (
                 <div
                   key={prompt.id}
-                  className="group bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all"
+                  className={`group bg-white dark:bg-gray-800 rounded-3xl border ${selectedPrompts.includes(prompt.id) ? 'border-[#0C2F53] dark:border-[#FFF200] ring-2 ring-[#0C2F53]/10 dark:ring-[#FFF200]/10' : 'border-gray-200 dark:border-gray-700'} p-6 hover:shadow-xl transition-all relative`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-6">
+                      {isBulkSelectMode && (
+                        <div className="flex items-center justify-center flex-shrink-0">
+                          <input
+                            type="checkbox"
+                            checked={selectedPrompts.includes(prompt.id)}
+                            onChange={() => togglePromptSelection(prompt.id)}
+                            className="w-5 h-5 rounded border-gray-300 text-[#0C2F53] focus:ring-[#0C2F53] dark:bg-gray-700 dark:border-gray-600 cursor-pointer transition-all duration-300"
+                          />
+                        </div>
+                      )}
                       <div className="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center flex-shrink-0 shadow-inner">
                         <MessageSquareCode className="w-8 h-8 text-[#0C2F53] dark:text-white" />
                       </div>
@@ -1123,7 +1421,20 @@ export default function AdminPage() {
                           <span className="px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl text-xs font-bold uppercase tracking-wider">
                             {prompt.category}
                           </span>
-                          {prompt.tags.map((tag, i) => (
+                          {prompt.aiRecommendations && prompt.aiRecommendations.length > 0 ? (
+                            prompt.aiRecommendations.map((rec, i) => (
+                              <a
+                                key={i}
+                                href={rec.url ? (rec.url.startsWith('http') ? rec.url : `https://${rec.url}`) : '#'}
+                                target={rec.url ? "_blank" : undefined}
+                                rel="noopener noreferrer"
+                                title={rec.url ? `ไปยังเว็บไซต์ ${rec.name}` : undefined}
+                                className={`px-3 py-1 ${rec.url ? 'bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/40 cursor-pointer' : 'bg-gray-100 dark:bg-gray-700 cursor-default'} text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 rounded-xl text-xs font-bold tracking-wider transition-colors inline-flex items-center`}
+                              >
+                                {rec.name}
+                              </a>
+                            ))
+                          ) : prompt.tags && prompt.tags.map((tag, i) => (
                             <span key={i} className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl text-xs font-bold tracking-wider">
                               {tag}
                             </span>
@@ -1150,52 +1461,113 @@ export default function AdminPage() {
                   </div>
                 </div>
               ))}
-              {activeTab === 'categories' && categories.map((cat: any) => (
-                <div
-                  key={cat.id}
-                  className="group bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center flex-shrink-0 shadow-inner">
-                        <Folder className="w-8 h-8 text-[#0C2F53] dark:text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-black text-[#0C2F53] dark:text-white mb-1 group-hover:text-blue-600 transition-colors">
-                          {cat.name}
-                        </h3>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-3">รหัส: {cat.category_id} | ไอคอน: {cat.icon}</p>
-                        <div className="flex flex-wrap gap-2">
-                          <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-xl ${cat.type === 'ai' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'}`}>
-                            {cat.type === 'ai' ? 'AI Tool' : 'Prompt'}
-                          </span>
+              {activeTab === 'categories' && (
+                <div className="space-y-12">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6 border-b-2 border-[#0C2F53]/10 dark:border-[#FFF200]/10 pb-3 flex items-center gap-2">
+                      <LayoutGrid className="w-5 h-5 text-blue-500" />
+                      หมวดหมู่ AI Tools ({categories.filter((c: any) => c.type === 'ai').length})
+                    </h3>
+                    <div className="grid grid-cols-1 gap-6">
+                      {categories.filter((c: any) => c.type === 'ai').map((cat: any) => (
+                        <div
+                          key={cat.id}
+                          className="group bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-6">
+                              <div className="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center flex-shrink-0 shadow-inner">
+                                <Folder className="w-8 h-8 text-[#0C2F53] dark:text-white" />
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-black text-[#0C2F53] dark:text-white mb-1 group-hover:text-blue-600 transition-colors">
+                                  {cat.name}
+                                </h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-3">รหัส: {cat.category_id} | ไอคอน: {cat.icon}</p>
+                                <div className="flex flex-wrap gap-2">
+                                  <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                                    AI Tool
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-3">
+                              <button
+                                onClick={() => handleEditCategory(cat)}
+                                className="p-3 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                                title="แก้ไข"
+                              >
+                                <Edit className="w-6 h-6" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCategory(cat.id)}
+                                className="p-3 rounded-2xl bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                                title="ลบ"
+                              >
+                                <Trash2 className="w-6 h-6" />
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => handleEditCategory(cat)}
-                        className="p-3 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
-                        title="แก้ไข"
-                      >
-                        <Edit className="w-6 h-6" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteCategory(cat.id)}
-                        className="p-3 rounded-2xl bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-all shadow-sm"
-                        title="ลบ"
-                      >
-                        <Trash2 className="w-6 h-6" />
-                      </button>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6 border-b-2 border-[#0C2F53]/10 dark:border-[#FFF200]/10 pb-3 flex items-center gap-2">
+                      <MessageSquareCode className="w-5 h-5 text-green-500" />
+                      หมวดหมู่ Prompts ({categories.filter((c: any) => c.type === 'prompt').length})
+                    </h3>
+                    <div className="grid grid-cols-1 gap-6">
+                      {categories.filter((c: any) => c.type === 'prompt').map((cat: any) => (
+                        <div
+                          key={cat.id}
+                          className="group bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-6">
+                              <div className="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center flex-shrink-0 shadow-inner">
+                                <Folder className="w-8 h-8 text-[#0C2F53] dark:text-white" />
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-black text-[#0C2F53] dark:text-white mb-1 group-hover:text-green-600 transition-colors">
+                                  {cat.name}
+                                </h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-3">รหัส: {cat.category_id} | ไอคอน: {cat.icon}</p>
+                                <div className="flex flex-wrap gap-2">
+                                  <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-xl bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                                    Prompt
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-3">
+                              <button
+                                onClick={() => handleEditCategory(cat)}
+                                className="p-3 rounded-2xl bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-600 hover:text-white transition-all shadow-sm"
+                                title="แก้ไข"
+                              >
+                                <Edit className="w-6 h-6" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCategory(cat.id)}
+                                className="p-3 rounded-2xl bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                                title="ลบ"
+                              >
+                                <Trash2 className="w-6 h-6" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
-        )
-        }
-      </main >
-    </div >
+        )}
+      </main>
+    </div>
   );
 }

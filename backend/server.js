@@ -94,9 +94,9 @@ app.get('/api/ais', async (req, res) => {
         const formattedRows = rows.map(row => {
             try {
                 const parsed = JSON.parse(row.description);
-                return { ...parsed, id: row.id.toString(), db_id: row.id, provider: row.provider || parsed.provider || parsed.developer || "" };
+                return { ...parsed, id: row.id.toString(), db_id: row.id, provider: row.provider || parsed.provider || parsed.developer || "", imageUrl: row.logo_url || parsed.imageUrl || "", isDepaRecommended: !!row.is_depa_recommended };
             } catch (e) {
-                return { id: row.id.toString(), db_id: row.id, name: row.name, description: row.description, link: row.link, provider: row.provider || "" };
+                return { id: row.id.toString(), db_id: row.id, name: row.name, description: row.description, link: row.link, provider: row.provider || "", imageUrl: row.logo_url || "", isDepaRecommended: !!row.is_depa_recommended };
             }
         });
         res.status(200).json(formattedRows);
@@ -123,10 +123,14 @@ app.post('/api/ais', verifyToken, async (req, res) => {
         if (cats.length > 0) category_name = cats[0].name;
     } catch (e) { }
 
+    const logo_url = data.imageUrl || "";
+    const is_depa_recommended = data.isDepaRecommended ? 1 : 0;
+
     try {
-        const [result] = await db.query('INSERT INTO ais (name, description, link, category_id, category_name, category_ids, provider) VALUES (?, ?, ?, ?, ?, ?, ?)', [name, description, link, category_id, category_name, category_ids, provider]);
+        const [result] = await db.query('INSERT INTO ais (name, description, link, category_id, category_ids, provider, logo_url, is_depa_recommended) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [name, description, link, category_id, category_ids, provider, logo_url, is_depa_recommended]);
         res.status(201).json({ message: "AI created successfully!", id: result.insertId });
     } catch (err) {
+        console.error("INSERT ERROR:", err);
         res.status(500).json({ message: err.message });
     }
 });
@@ -147,10 +151,14 @@ app.put('/api/ais/:id', verifyToken, async (req, res) => {
         if (cats.length > 0) category_name = cats[0].name;
     } catch (e) { }
 
+    const logo_url = data.imageUrl || "";
+    const is_depa_recommended = data.isDepaRecommended ? 1 : 0;
+
     try {
-        await db.query('UPDATE ais SET name = ?, description = ?, link = ?, category_id = ?, category_name = ?, category_ids = ?, provider = ? WHERE id = ?', [name, description, link, category_id, category_name, category_ids, provider, req.params.id]);
+        await db.query('UPDATE ais SET name = ?, description = ?, link = ?, category_id = ?, category_ids = ?, provider = ?, logo_url = ?, is_depa_recommended = ? WHERE id = ?', [name, description, link, category_id, category_ids, provider, logo_url, is_depa_recommended, req.params.id]);
         res.status(200).json({ message: "AI updated successfully!" });
     } catch (err) {
+        console.error("UPDATE ERROR:", err);
         res.status(500).json({ message: err.message });
     }
 });
@@ -240,14 +248,8 @@ app.post('/api/prompts', verifyToken, async (req, res) => {
     const category_id = data.category || "";
     const category_ids = data.categoryIds ? JSON.stringify(data.categoryIds) : '[]';
 
-    let category_name = "";
     try {
-        const [cats] = await db.query('SELECT name FROM categories WHERE category_id = ? AND type = "prompt"', [category_id]);
-        if (cats.length > 0) category_name = cats[0].name;
-    } catch (e) { }
-
-    try {
-        const [result] = await db.query('INSERT INTO prompts (title, content, ai_id, category_id, category_name, category_ids) VALUES (?, ?, ?, ?, ?, ?)', [title, content, ai_id, category_id, category_name, category_ids]);
+        const [result] = await db.query('INSERT INTO prompts (title, content, ai_id, category_id, category_ids) VALUES (?, ?, ?, ?, ?)', [title, content, ai_id, category_id, category_ids]);
         res.status(201).json({ message: "Prompt created successfully!", id: result.insertId });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -263,14 +265,8 @@ app.put('/api/prompts/:id', verifyToken, async (req, res) => {
     const category_id = data.category || "";
     const category_ids = data.categoryIds ? JSON.stringify(data.categoryIds) : '[]';
 
-    let category_name = "";
     try {
-        const [cats] = await db.query('SELECT name FROM categories WHERE category_id = ? AND type = "prompt"', [category_id]);
-        if (cats.length > 0) category_name = cats[0].name;
-    } catch (e) { }
-
-    try {
-        await db.query('UPDATE prompts SET title = ?, content = ?, ai_id = ?, category_id = ?, category_name = ?, category_ids = ? WHERE id = ?', [title, content, ai_id, category_id, category_name, category_ids, req.params.id]);
+        await db.query('UPDATE prompts SET title = ?, content = ?, ai_id = ?, category_id = ?, category_ids = ? WHERE id = ?', [title, content, ai_id, category_id, category_ids, req.params.id]);
         res.status(200).json({ message: "Prompt updated successfully!" });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -306,7 +302,7 @@ app.post('/api/seed', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
     initializeAdmin();
 });

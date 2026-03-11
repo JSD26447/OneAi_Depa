@@ -24,7 +24,7 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://10.0.63.134:5000/api';
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
