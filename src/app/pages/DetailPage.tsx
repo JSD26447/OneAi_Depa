@@ -1,7 +1,7 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, CheckCircle2, Sparkles, Settings, X, Zap, ArrowRight, Layers, Fingerprint } from 'lucide-react';
+import { ArrowLeft, ExternalLink, CheckCircle2, Sparkles, Settings, X, Zap, ArrowRight, Layers, Fingerprint, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 
 export default function DetailPage() {
@@ -42,6 +42,18 @@ export default function DetailPage() {
     offset: ["start center", "end center"]
   });
 
+  // 4. Coverflow Plans Slider
+  const [activeIndex, setActiveIndex] = useState(1);
+  const dragStartX = useRef<number | null>(null);
+  const isDragging = useRef(false);
+
+  useEffect(() => {
+    if (tool) {
+      const mid = Math.floor((tool.plans?.length || 1) / 2);
+      setActiveIndex(mid);
+    }
+  }, [id, tool]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
@@ -58,14 +70,6 @@ export default function DetailPage() {
       </div>
     );
   }
-
-  const difficultyColors = {
-    Beginner: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
-    Intermediate: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
-    Advanced: 'bg-rose-500/10 text-rose-400 border border-rose-500/20',
-  };
-
-  const badgeBaseStyles = "px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-md";
 
   const difficultyLabels = {
     Beginner: 'ระดับ: เริ่มต้น',
@@ -172,7 +176,7 @@ export default function DetailPage() {
         </section>
 
         {/* Apple Style Intro Cinematic Text */}
-        <section ref={introRef} className="h-[150vh] bg-black relative">
+        <section className="h-[150vh] bg-black relative">
           <div className="sticky top-0 h-screen flex items-center justify-center px-6">
             <motion.h2
               style={{ scale: introTextScale, opacity: introTextOpacity }}
@@ -226,25 +230,16 @@ export default function DetailPage() {
                   className="relative group transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02]"
                   style={{ '--hover-shadow': shadowColor } as any}
                 >
-                  {/* Outer Glow */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${bgGradient} rounded-[2.5rem] blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-700`} />
-                  
-                  {/* Card Border wrapper */}
                   <div className="relative p-[1.5px] rounded-[2.5rem] bg-white/10 group-hover:bg-transparent transition-colors duration-500 overflow-hidden h-full">
-                    {/* Active Gradient Border */}
                     <div className={`absolute inset-0 bg-gradient-to-br ${bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                    
-                    {/* Inner Content Card */}
                     <div className="relative h-full bg-[#0A0A0B] group-hover:bg-[#111113]/90 backdrop-blur-xl p-8 md:p-12 rounded-[2.5rem] flex flex-col min-h-[260px] transition-all duration-500 overflow-hidden border border-transparent group-hover:border-white/5">
-                      {/* Background Massive Icon */}
                       <div className="absolute -bottom-10 -right-10 opacity-0 group-hover:opacity-[0.03] transition-all duration-700 transform rotate-12 group-hover:rotate-0 scale-50 group-hover:scale-100 pointer-events-none">
                         <CheckCircle2 className="w-72 h-72 text-white" />
                       </div>
-
                       <div className="relative z-10 w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 text-white/60 group-hover:scale-110 group-hover:text-white transition-all duration-500 shadow-inner group-hover:shadow-[0_0_30px_var(--hover-shadow)] group-hover:border-white/30">
                         <Sparkles className="w-8 h-8 drop-shadow-lg" />
                       </div>
-                      
                       <h3 className="text-2xl md:text-[1.75rem] font-bold text-white/80 group-hover:text-white leading-snug transition-colors duration-300 relative z-10 flex-1 flex items-start">
                         {item}
                       </h3>
@@ -257,20 +252,14 @@ export default function DetailPage() {
 
           {/* 3. Step-by-step Usage - Scroll-driven Timeline */}
           <section ref={stepsRef} className="space-y-8 relative">
-
-            {/* Background Timeline Line */}
             <div className="absolute left-[2.85rem] md:left-[3.8rem] top-24 bottom-10 w-px bg-white/10 hidden md:block" />
-
-            {/* Scroll-driven Progress Fill Line */}
             <motion.div
               className="absolute left-[2.85rem] md:left-[3.8rem] top-24 bottom-10 w-[2px] bg-white hidden md:block origin-top z-10"
               style={{ scaleY: stepsProgress }}
             />
-
             <div className="flex flex-col items-center mb-16 text-center">
               <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-4">วิธีใช้งาน.</h2>
             </div>
-
             <div className="space-y-6">
               {tool.howToUse.map((step, index) => (
                 <motion.div
@@ -356,55 +345,211 @@ export default function DetailPage() {
             </div>
 
             {tool.plans && tool.plans.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {tool.plans.map((plan, idx) => {
-                  const isPopular = plan.name.toLowerCase().includes('pro') || plan.name.toLowerCase().includes('premium') || plan.name.toLowerCase().includes('standard');
-                  return (
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    transition={{ duration: 0.5, delay: idx * 0.15 }}
-                    key={idx}
-                    className={`flex flex-col p-8 md:p-10 rounded-[2rem] backdrop-blur-xl bg-white/[0.02] border transition-all duration-500 relative group hover:-translate-y-2 ${isPopular ? 'border-blue-500/50 shadow-[0_0_40px_-15px_rgba(59,130,246,0.2)] hover:shadow-[0_0_60px_-15px_rgba(59,130,246,0.4)]' : 'border-white/10 hover:border-white/30 hover:shadow-[0_0_40px_-15px_rgba(255,255,255,0.1)]'}`}
+              tool.plans.length > 2 ? (
+                /* === COVERFLOW MODE (> 2 plans) === */
+                <div
+                  className="relative select-none"
+                  style={{ perspective: '1200px' }}
+                  onMouseDown={(e) => {
+                    dragStartX.current = e.clientX;
+                    isDragging.current = true;
+                  }}
+                  onMouseMove={(e) => {
+                    if (!isDragging.current || dragStartX.current === null) return;
+                    const diff = dragStartX.current - e.clientX;
+                    if (Math.abs(diff) > 50) {
+                      if (diff > 0 && activeIndex < (tool.plans?.length ?? 0) - 1) {
+                        setActiveIndex(i => i + 1);
+                        dragStartX.current = null;
+                        isDragging.current = false;
+                      } else if (diff < 0 && activeIndex > 0) {
+                        setActiveIndex(i => i - 1);
+                        dragStartX.current = null;
+                        isDragging.current = false;
+                      }
+                    }
+                  }}
+                  onMouseUp={() => {
+                    isDragging.current = false;
+                    dragStartX.current = null;
+                  }}
+                  onMouseLeave={() => {
+                    isDragging.current = false;
+                    dragStartX.current = null;
+                  }}
+                  onTouchStart={(e) => {
+                    dragStartX.current = e.touches[0].clientX;
+                    isDragging.current = true;
+                  }}
+                  onTouchMove={(e) => {
+                    if (!isDragging.current || dragStartX.current === null) return;
+                    const diff = dragStartX.current - e.touches[0].clientX;
+                    if (Math.abs(diff) > 40) {
+                      if (diff > 0 && activeIndex < (tool.plans?.length ?? 0) - 1) {
+                        setActiveIndex(i => i + 1);
+                        dragStartX.current = null;
+                        isDragging.current = false;
+                      } else if (diff < 0 && activeIndex > 0) {
+                        setActiveIndex(i => i - 1);
+                        dragStartX.current = null;
+                        isDragging.current = false;
+                      }
+                    }
+                  }}
+                  onTouchEnd={() => {
+                    isDragging.current = false;
+                    dragStartX.current = null;
+                  }}
+                >
+                  <button
+                    onClick={() => setActiveIndex(i => Math.max(0, i - 1))}
+                    disabled={activeIndex === 0}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-30 -translate-x-2 md:-translate-x-6 w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-xl"
                   >
-                    {isPopular && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg flex items-center gap-1.5 whitespace-nowrap z-20">
-                        <Sparkles className="w-3.5 h-3.5" /> แนะนำ
-                      </div>
-                    )}
-                    
-                    <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent rounded-[2rem] opacity-0 group-hover:opacity-100 transition-duration-500" />
-                    
-                    <div className="relative z-10 flex flex-col h-full">
-                      <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">{plan.name}</h3>
-                      <div className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70 tracking-tight mb-2">
-                        {plan.price}
-                      </div>
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setActiveIndex(i => Math.min((tool.plans?.length ?? 1) - 1, i + 1))}
+                    disabled={activeIndex === (tool.plans?.length ?? 1) - 1}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-30 translate-x-2 md:translate-x-6 w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-xl"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
 
-                      <div className="h-px w-full bg-gradient-to-r from-white/20 to-transparent my-8" />
-
-                      <p className="text-white/80 font-medium mb-8 flex-1 leading-relaxed text-base">{plan.features}</p>
-
-                      <div className="pt-6 border-t border-white/10 text-sm mt-auto">
-                        {plan.forOrg === true ? (
-                          <span className="text-emerald-400 font-bold flex items-center gap-2 bg-emerald-400/10 border border-emerald-400/20 px-4 py-3 rounded-xl">
-                            <CheckCircle2 className="w-5 h-5" /> เหมาะสำหรับองค์กร
-                          </span>
-                        ) : plan.forOrg === 'warning' ? (
-                          <span className="text-amber-400 font-bold flex items-center gap-2 bg-amber-400/10 border border-amber-400/20 px-4 py-3 rounded-xl">
-                            <Settings className="w-5 h-5" /> ส่วนตัว / ทีมขนาดเล็ก
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 font-bold flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-3 rounded-xl">
-                            <X className="w-5 h-5" /> ไม่เหมาะสำหรับองค์กร
-                          </span>
-                        )}
+                  <div className="flex items-center justify-center gap-4 py-14 px-16 overflow-hidden">
+                    {tool.plans.map((plan, idx) => {
+                      const offset = idx - activeIndex;
+                      const isActive = offset === 0;
+                      const isVisible = Math.abs(offset) <= 2;
+                      const rotateY = offset * -35;
+                      const translateX = offset * 60;
+                      const scale = isActive ? 1.05 : Math.max(0.78, 1 - Math.abs(offset) * 0.12);
+                      const opacity = isActive ? 1 : Math.max(0.3, 1 - Math.abs(offset) * 0.35);
+                      const zIndex = isActive ? 20 : 10 - Math.abs(offset);
+                      const brightness = isActive ? 100 : Math.max(50, 100 - Math.abs(offset) * 25);
+                      if (!isVisible) return null;
+                      const isPopular = plan.name.toLowerCase().includes('pro') || plan.name.toLowerCase().includes('premium') || plan.name.toLowerCase().includes('standard');
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => setActiveIndex(idx)}
+                          className="flex-shrink-0 cursor-pointer"
+                          style={{
+                            transform: `translateX(${translateX}%) rotateY(${rotateY}deg) scale(${scale})`,
+                            opacity,
+                            zIndex,
+                            filter: `brightness(${brightness}%)`,
+                            transition: 'all 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                            transformStyle: 'preserve-3d',
+                            position: 'relative',
+                            width: '280px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              position: 'absolute',
+                              bottom: '-40px',
+                              left: '10%',
+                              right: '10%',
+                              height: '40px',
+                              background: isActive
+                                ? 'radial-gradient(ellipse at center, rgba(255,255,255,0.18) 0%, transparent 70%)'
+                                : 'radial-gradient(ellipse at center, rgba(255,255,255,0.05) 0%, transparent 70%)',
+                              filter: 'blur(6px)',
+                              transform: 'scaleY(0.4)',
+                              transition: 'all 0.55s ease',
+                              pointerEvents: 'none',
+                            }}
+                          />
+                          <div className={`flex flex-col p-8 rounded-[2rem] backdrop-blur-xl relative ${isActive ? 'bg-white/[0.06] border-2 border-white/30 shadow-[0_0_60px_-10px_rgba(255,255,255,0.25),0_30px_60px_-20px_rgba(0,0,0,0.8)]' : 'bg-white/[0.02] border border-white/10'}`}>
+                            {isActive && isPopular && (
+                              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg flex items-center gap-1.5 whitespace-nowrap z-20">
+                                <Sparkles className="w-3.5 h-3.5" /> แนะนำ
+                              </div>
+                            )}
+                            {isActive && !isPopular && plan.forOrg === true && (
+                              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg flex items-center gap-1.5 whitespace-nowrap z-20">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> สำหรับองค์กร
+                              </div>
+                            )}
+                            <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
+                            <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70 tracking-tight mb-2">
+                              {plan.price}
+                            </div>
+                            <div className="h-px w-full bg-gradient-to-r from-white/20 to-transparent my-6" />
+                            <p className="text-white/80 font-medium mb-6 flex-1 leading-relaxed text-sm">{plan.features}</p>
+                            <div className="pt-4 border-t border-white/10 text-sm mt-auto">
+                              {plan.forOrg === true ? (
+                                <span className="text-emerald-400 font-bold flex items-center gap-2 bg-emerald-400/10 border border-emerald-400/20 px-3 py-2.5 rounded-xl text-xs">
+                                  <CheckCircle2 className="w-4 h-4" /> เหมาะสำหรับองค์กร
+                                </span>
+                              ) : plan.forOrg === 'warning' ? (
+                                <span className="text-amber-400 font-bold flex items-center gap-2 bg-amber-400/10 border border-amber-400/20 px-3 py-2.5 rounded-xl text-xs">
+                                  <Settings className="w-4 h-4" /> ส่วนตัว / ทีมขนาดเล็ก
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 font-bold flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2.5 rounded-xl text-xs">
+                                  <X className="w-4 h-4" /> ไม่เหมาะสำหรับองค์กร
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-center gap-2 mt-2">
+                    {tool.plans.map((_, idx) => (
+                      <button key={idx} onClick={() => setActiveIndex(idx)} className={`rounded-full transition-all duration-300 ${idx === activeIndex ? 'bg-white w-6 h-2' : 'bg-white/30 w-2 h-2'}`} />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {tool.plans.map((plan, idx) => {
+                    const isPopular = plan.name.toLowerCase().includes('pro') || plan.name.toLowerCase().includes('premium') || plan.name.toLowerCase().includes('standard');
+                    return (
+                    <motion.div
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: "-50px" }}
+                      transition={{ duration: 0.5, delay: idx * 0.15 }}
+                      key={idx}
+                      className={`flex flex-col p-8 md:p-10 rounded-[2rem] backdrop-blur-xl bg-white/[0.02] border transition-all duration-500 relative group hover:-translate-y-2 ${isPopular ? 'border-blue-500/50 shadow-[0_0_40px_-15px_rgba(59,130,246,0.2)] hover:shadow-[0_0_60px_-15px_rgba(59,130,246,0.4)]' : 'border-white/10 hover:border-white/30 hover:shadow-[0_0_40px_-15px_rgba(255,255,255,0.1)]'}`}
+                    >
+                      {isPopular && (
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg flex items-center gap-1.5 whitespace-nowrap z-20">
+                          <Sparkles className="w-3.5 h-3.5" /> แนะนำ
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent rounded-[2rem] opacity-0 group-hover:opacity-100 transition-duration-500" />
+                      <div className="relative z-10 flex flex-col h-full">
+                        <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">{plan.name}</h3>
+                        <div className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70 tracking-tight mb-2">
+                          {plan.price}
+                        </div>
+                        <div className="h-px w-full bg-gradient-to-r from-white/20 to-transparent my-8" />
+                        <p className="text-white/80 font-medium mb-8 flex-1 leading-relaxed text-base">{plan.features}</p>
+                        <div className="pt-6 border-t border-white/10 text-sm mt-auto">
+                          {plan.forOrg === true ? (
+                            <span className="text-emerald-400 font-bold flex items-center gap-2 bg-emerald-400/10 border border-emerald-400/20 px-4 py-3 rounded-xl">
+                              <CheckCircle2 className="w-5 h-5" /> เหมาะสำหรับองค์กร
+                            </span>
+                          ) : plan.forOrg === 'warning' ? (
+                            <span className="text-amber-400 font-bold flex items-center gap-2 bg-amber-400/10 border border-amber-400/20 px-4 py-3 rounded-xl">
+                              <Settings className="w-5 h-5" /> ส่วนตัว / ทีมขนาดเล็ก
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 font-bold flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-3 rounded-xl">
+                              <X className="w-5 h-5" /> ไม่เหมาะสำหรับองค์กร
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                )})}
-              </div>
+                    </motion.div>
+                  )})}
+                </div>
+              )
             )}
 
             {tool.orgSuitability && (
@@ -426,32 +571,98 @@ export default function DetailPage() {
             )}
           </motion.section>
 
-          {/* 7. CTA Section - Apple Style Minimalist & Massive */}
+          {/* 7. CTA Section - Premium Visual Flare */}
           <motion.section
-            initial={{ opacity: 0, scale: 0.9, filter: "blur(20px)" }}
-            whileInView={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
             viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="pt-32 pb-48 text-center"
+            transition={{ duration: 1 }}
+            className="relative pt-32 pb-64 text-center overflow-visible"
           >
-            <div className="max-w-4xl mx-auto flex flex-col items-center">
+            {/* Animated Ambient Orbs */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none z-0">
+              <motion.div
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.15, 0.3, 0.15],
+                  x: [-20, 20, -20],
+                  y: [-20, 20, -20],
+                }}
+                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute top-0 left-1/4 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-blue-600/20 blur-[120px] rounded-full"
+              />
+              <motion.div
+                animate={{
+                  scale: [1.2, 1, 1.2],
+                  opacity: [0.1, 0.2, 0.1],
+                  x: [20, -20, 20],
+                  y: [20, -20, 20],
+                }}
+                transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute bottom-0 right-1/4 w-[250px] md:w-[500px] h-[250px] md:h-[500px] bg-purple-600/20 blur-[120px] rounded-full"
+              />
+            </div>
 
-              <h2 className="text-6xl md:text-8xl font-black text-white tracking-tighter mb-8 leading-[1.1]">
-                พร้อมที่จะลอง <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-500">{tool.name}</span> แล้วหรือยัง?
-              </h2>
-              <p className="text-xl text-slate-400 mb-10">
-                เริ่มต้นใช้งานและปลดล็อกศักยภาพของคุณด้วย AI
-              </p>
-
-              <a
-                href={tool.officialWebsite}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative inline-flex items-center justify-center bg-white text-black px-10 py-5 rounded-full font-bold text-xl md:text-2xl transition-all duration-300 hover:scale-105"
+            <div className="relative z-10 max-w-5xl mx-auto flex flex-col items-center px-6">
+              <motion.div
+                initial={{ y: 60, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
               >
-                ไปที่เว็บไซต์อย่างเป็นทางการ
-                <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform" />
-              </a>
+                <h2 className="text-5xl md:text-7xl lg:text-[8rem] font-black text-white tracking-tighter mb-10 leading-[0.9] inline-block">
+                  พร้อมที่จะลอง<br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-white to-purple-400 bg-[length:200%_auto] animate-gradient-x font-black">
+                    {tool.name}
+                  </span>
+                  <br />แล้วหรือยัง?
+                </h2>
+              </motion.div>
+
+              <motion.p
+                initial={{ y: 20, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="text-xl md:text-2xl text-slate-400 mb-16 max-w-2xl font-medium tracking-tight"
+              >
+                ก้าวข้ามขีดจำกัดเดิมๆ และปลดล็อกศักยภาพในตัวคุณด้วยพลังของ AI ที่ออกแบบมาเพื่อคุณโดยเฉพาะ
+              </motion.p>
+
+              {/* Magnetic Interactive Button */}
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="relative group"
+              >
+                <div className="absolute inset-0 bg-white/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <a
+                  href={tool.officialWebsite}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative inline-flex items-center justify-center bg-white text-black px-12 py-6 rounded-full font-bold text-xl md:text-2xl transition-all duration-300 shadow-[0_20px_50px_rgba(255,255,255,0.1)] group-hover:shadow-[0_20px_60px_rgba(255,255,255,0.2)] overflow-hidden"
+                >
+                  <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
+                  
+                  <span className="relative flex items-center gap-3">
+                    ไปที่เว็บไซต์อย่างเป็นทางการ
+                    <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" />
+                  </span>
+                </a>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1, delay: 1 }}
+                className="mt-32 flex items-center gap-2 text-white/20 font-medium tracking-widest text-[10px] uppercase"
+              >
+                <div className="w-8 h-px bg-white/10" />
+                Powered by depa AI Ecosystem
+                <div className="w-8 h-px bg-white/10" />
+              </motion.div>
             </div>
           </motion.section>
 
