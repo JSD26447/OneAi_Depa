@@ -41,7 +41,7 @@ export default function PromptsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
             <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
             {/* Header */}
@@ -67,7 +67,7 @@ export default function PromptsPage() {
                                 </div>
                                 <div className="hidden sm:block leading-tight">
                                     <h1 className="text-xl font-bold tracking-tight group-hover:text-[#FFF200] transition-colors">AI Discovery Center</h1>
-                                    <p className="text-[10px] text-[#FFF200] font-semibold uppercase tracking-widest">Powered by depa</p>
+                                    <p className="text-[10px] text-[#FFF200] font-semibold tracking-widest">Powered by depa</p>
                                 </div>
                             </Link>
                         </div>
@@ -159,7 +159,7 @@ export default function PromptsPage() {
                                     return (
                                         <div
                                             key={p.id}
-                                            className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group"
+                                            className="bg-white dark:bg-slate-800 rounded-[22px] border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group"
                                         >
                                             <div className="p-6 md:p-8">
                                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -179,7 +179,12 @@ export default function PromptsPage() {
                                                                 );
                                                             })}
                                                         </div>
-                                                        <div className="flex flex-wrap gap-2">
+                                                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                                                            {(p.aiRecommendations && p.aiRecommendations.length > 0) || (p.tags && p.tags.length > 0) ? (
+                                                                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 mr-1">
+                                                                    🤖 AI ที่แนะนำ:
+                                                                </span>
+                                                            ) : null}
                                                             {p.aiRecommendations && p.aiRecommendations.length > 0 ? (
                                                                 p.aiRecommendations.map((rec, i) => (
                                                                     <a
@@ -188,8 +193,9 @@ export default function PromptsPage() {
                                                                         target={rec.url ? "_blank" : undefined}
                                                                         rel="noopener noreferrer"
                                                                         title={rec.url ? `ไปยังเว็บไซต์ ${rec.name}` : undefined}
-                                                                        className={`px-3 py-1 ${rec.url ? 'bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-blue-900/40 cursor-pointer' : 'bg-slate-100 dark:bg-slate-700 cursor-default'} text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 rounded-full text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center`}
+                                                                        className={`px-3 py-1 ${rec.url ? 'bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 hover:text-blue-700 cursor-pointer border border-blue-200 dark:border-blue-700/50 hover:border-blue-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 cursor-default'} rounded-full text-xs font-bold tracking-wider transition-all inline-flex items-center gap-1`}
                                                                     >
+                                                                        {rec.url && <span className="text-[9px]">↗</span>}
                                                                         {rec.name}
                                                                     </a>
                                                                 ))
@@ -222,15 +228,16 @@ export default function PromptsPage() {
                                                                             target="_blank"
                                                                             rel="noopener noreferrer"
                                                                             title={`ไปยังเว็บไซต์ ${tag}`}
-                                                                            className="px-3 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-blue-900/40 text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 rounded-full text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer inline-flex items-center"
+                                                                            className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 hover:text-blue-700 rounded-full text-xs font-bold tracking-wider transition-all cursor-pointer inline-flex items-center gap-1 border border-blue-200 dark:border-blue-700/50 hover:border-blue-400"
                                                                         >
+                                                                            <span className="text-[9px]">↗</span>
                                                                             {tag}
                                                                         </a>
                                                                     );
                                                                 }
 
                                                                 return (
-                                                                    <span key={tag} className="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-bold uppercase tracking-wider">
+                                                                    <span key={tag} className="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-bold tracking-wider">
                                                                         {tag}
                                                                     </span>
                                                                 );

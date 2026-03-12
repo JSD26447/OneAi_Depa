@@ -210,7 +210,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       {/* Header */}
@@ -236,7 +236,7 @@ export default function HomePage() {
                 </div>
                 <div className="hidden sm:block leading-tight">
                   <h1 className="text-xl font-bold tracking-tight group-hover:text-[#FFF200] transition-colors">AI Discovery Center</h1>
-                  <p className="text-[10px] text-[#FFF200] font-semibold uppercase tracking-widest">Powered by depa</p>
+                  <p className="text-[10px] text-[#FFF200] font-semibold tracking-widest">Powered by depa</p>
                 </div>
               </Link>
             </div>
@@ -421,15 +421,12 @@ export default function HomePage() {
                           return (
                             <div
                               key={tool.id}
-                              className={`group bg-white dark:bg-gray-800 rounded-3xl border-2 ${tool.isDepaRecommended ? 'border-[#FFF200] shadow-[0_0_15px_rgba(255,242,0,0.2)] dark:shadow-[0_0_15px_rgba(255,242,0,0.1)]' : 'border-transparent dark:border-transparent hover:border-gray-200 dark:hover:border-gray-700'} hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col h-full overflow-hidden relative`}
+                              className={`group bg-white dark:bg-gray-800 rounded-[22px] border-2 ${tool.isDepaRecommended ? 'border-[#FFF200] shadow-[0_0_15px_rgba(255,242,0,0.2)] dark:shadow-[0_0_15px_rgba(255,242,0,0.1)]' : 'border-transparent dark:border-transparent hover:border-gray-200 dark:hover:border-gray-700'} hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col h-full overflow-hidden relative`}
                               style={!tool.isDepaRecommended ? { border: '1px solid var(--border-color, #e5e7eb)' } : {}}
                             >
                               {tool.isDepaRecommended && (
-                                <div className="absolute top-3 right-3 z-20 pointer-events-none" title="DEPA Recommended">
-                                  <div className="relative">
-                                    <div className="absolute inset-0 bg-[#FFF200] blur-md opacity-60 rounded-full animate-pulse"></div>
-                                    <img src="/images/depa-badge.png" alt="DEPA Recommended" className="w-12 h-12 object-contain relative z-10 drop-shadow-xl hover:scale-110 transition-transform" />
-                                  </div>
+                                <div className="absolute -top-[11px] -right-[13px] z-20 pointer-events-none" title="DEPA Recommended">
+                                  <img src="/images/depa-badge.png" alt="DEPA Recommended" className="w-[125px] sm:w-[145px] h-auto object-contain drop-shadow-md" />
                                 </div>
                               )}
 

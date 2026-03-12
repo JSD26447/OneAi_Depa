@@ -91,12 +91,20 @@ const initializeAdmin = async () => {
 app.get('/api/ais', async (req, res) => {
     try {
         const [rows] = await db.query('SELECT * FROM ais ORDER BY created_at DESC');
+        const baseUrl = req.protocol + '://' + req.get('host');
         const formattedRows = rows.map(row => {
+            const getImageUrl = (url) => {
+                if (url && url.startsWith('/uploads/')) {
+                    return baseUrl + url;
+                }
+                return url;
+            };
+
             try {
                 const parsed = JSON.parse(row.description);
-                return { ...parsed, id: row.id.toString(), db_id: row.id, provider: row.provider || parsed.provider || parsed.developer || "", imageUrl: row.logo_url || parsed.imageUrl || "", isDepaRecommended: !!row.is_depa_recommended };
+                return { ...parsed, id: row.id.toString(), db_id: row.id, provider: row.provider || parsed.provider || parsed.developer || "", imageUrl: getImageUrl(row.logo_url || parsed.imageUrl || ""), isDepaRecommended: !!row.is_depa_recommended };
             } catch (e) {
-                return { id: row.id.toString(), db_id: row.id, name: row.name, description: row.description, link: row.link, provider: row.provider || "", imageUrl: row.logo_url || "", isDepaRecommended: !!row.is_depa_recommended };
+                return { id: row.id.toString(), db_id: row.id, name: row.name, description: row.description, link: row.link, provider: row.provider || "", imageUrl: getImageUrl(row.logo_url || ""), isDepaRecommended: !!row.is_depa_recommended };
             }
         });
         res.status(200).json(formattedRows);

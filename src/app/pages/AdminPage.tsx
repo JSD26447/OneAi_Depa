@@ -171,7 +171,7 @@ export default function AdminPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://10.0.63.134:5000/api/upload', {
+      const res = await fetch('http://localhost:5000/api/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -181,14 +181,15 @@ export default function AdminPage() {
 
       if (res.ok) {
         const data = await res.json();
-        const fullUrl = `http://10.0.63.134:5000${data.imageUrl}`;
+        const fullUrl = `http://localhost:5000${data.imageUrl}`;
         handleToolInputChange('imageUrl', fullUrl);
       } else {
-        alert('Upload failed');
+        const errData = await res.json().catch(() => ({}));
+        alert(`Upload failed: ${res.status} ${errData.message || ''}`);
       }
     } catch (err) {
       console.error('Upload error', err);
-      alert('Upload error');
+      alert(`Upload error: ${(err as Error).message}`);
     } finally {
       setIsUploading(false);
     }
@@ -259,27 +260,27 @@ export default function AdminPage() {
   };
 
   // --- Submit Handlers ---
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (activeTab === 'tools') {
       if (editingId) {
-        updateTool(editingId, toolFormData);
+        await updateTool(editingId, toolFormData);
       } else {
-        addTool(toolFormData);
+        await addTool(toolFormData);
       }
       resetToolForm();
     } else if (activeTab === 'prompts') {
       if (editingId) {
-        updatePrompt(editingId, promptFormData);
+        await updatePrompt(editingId, promptFormData);
       } else {
-        addPrompt(promptFormData);
+        await addPrompt(promptFormData);
       }
       resetPromptForm();
     } else {
       if (editingId) {
-        updateCategory(editingId, categoryFormData);
+        await updateCategory(editingId, categoryFormData);
       } else {
-        addCategory(categoryFormData);
+        await addCategory(categoryFormData);
       }
       resetCategoryForm();
     }
@@ -384,7 +385,7 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Header */}
       <header className="bg-[#0C2F53] text-white border-b border-white/10 sticky top-0 z-50 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
@@ -635,24 +636,39 @@ export default function AdminPage() {
                         </select>
 
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 mt-4">
-                          หมวดหมู่เพิ่มเติม (Multiple Categories)
+                          หมวดหมู่เพิ่มเติม (Select Multiple Categories)
                         </label>
-                        <select
-                          multiple
-                          value={toolFormData.categoryIds || []}
-                          onChange={(e) => {
-                            const options = Array.from(e.target.selectedOptions, option => option.value);
-                            handleToolInputChange('categoryIds', options);
-                          }}
-                          className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-all font-medium min-h-[140px]"
-                        >
-                          {categories.filter((c: any) => c.type === 'ai').map((c: any) => (
-                            <option key={c.category_id} value={c.category_id} className="py-1 px-2 mb-1 hover:bg-green-50 dark:hover:bg-green-900/40 rounded-md">
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
-                        <p className="text-xs text-slate-500 mt-2 font-medium bg-slate-100 dark:bg-slate-800 p-2 rounded-lg"><Info className="inline w-3 h-3 mr-1" /> กด Ctrl (Windows) หรือ Cmd (Mac) ค้างไว้เพื่อเลือกหลายรายการ</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+                          {categories.filter((c: any) => c.type === 'ai').map((c: any) => {
+                            const isSelected = toolFormData.categoryIds?.includes(c.category_id);
+                            return (
+                              <button
+                                key={c.category_id}
+                                type="button"
+                                onClick={() => {
+                                  const currentIds = toolFormData.categoryIds || [];
+                                  const newIds = isSelected 
+                                    ? currentIds.filter(id => id !== c.category_id)
+                                    : [...currentIds, c.category_id];
+                                  handleToolInputChange('categoryIds', newIds);
+                                }}
+                                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all border-2 ${
+                                  isSelected 
+                                    ? 'bg-green-600 border-green-600 text-white shadow-lg shadow-green-200 dark:shadow-none' 
+                                    : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-green-400'
+                                }`}
+                              >
+                                <div className={`flex-shrink-0 w-4 h-4 rounded flex items-center justify-center border-2 transition-colors ${isSelected ? 'bg-white border-white text-green-600' : 'border-gray-300 dark:border-gray-500'}`}>
+                                  {isSelected && <CheckSquare className="w-3 h-3" />}
+                                </div>
+                                <span className="truncate">{c.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-3 font-medium flex items-center gap-1">
+                          <Info className="w-3.5 h-3.5" /> เลือกทุกหมวดหมู่ที่เครื่องมือนี้ครอบคลุม
+                        </p>
                       </div>
 
                       <div>
@@ -1115,22 +1131,39 @@ export default function AdminPage() {
 
                       <div className="md:col-span-2">
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                          หมวดหมู่เพิ่มเติม (Multiple Categories)
+                          หมวดหมู่เพิ่มเติม (Select Multiple Categories)
                         </label>
-                        <select
-                          multiple
-                          value={promptFormData.categoryIds || []}
-                          onChange={(e) => {
-                            const options = Array.from(e.target.selectedOptions, option => option.value);
-                            handlePromptInputChange('categoryIds', options);
-                          }}
-                          className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium min-h-[120px]"
-                        >
-                          {categories.filter((c: any) => c.type === 'prompt').map((c: any) => (
-                            <option key={c.category_id} value={c.category_id} className="py-1 px-2 mb-1 rounded-md">{c.name}</option>
-                          ))}
-                        </select>
-                        <p className="text-xs text-slate-500 mt-2">กด Ctrl (Windows) หรือ Cmd (Mac) ค้างไว้เพื่อเลือกหลายรายการ</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {categories.filter((c: any) => c.type === 'prompt').map((c: any) => {
+                            const isSelected = promptFormData.categoryIds?.includes(c.category_id);
+                            return (
+                              <button
+                                key={c.category_id}
+                                type="button"
+                                onClick={() => {
+                                  const currentIds = promptFormData.categoryIds || [];
+                                  const newIds = isSelected 
+                                    ? currentIds.filter(id => id !== c.category_id)
+                                    : [...currentIds, c.category_id];
+                                  handlePromptInputChange('categoryIds', newIds);
+                                }}
+                                className={`flex items-center gap-2 px-3 py-3 rounded-xl text-xs font-bold transition-all border-2 ${
+                                  isSelected 
+                                    ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-none' 
+                                    : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-blue-400'
+                                }`}
+                              >
+                                <div className={`flex-shrink-0 w-4 h-4 rounded flex items-center justify-center border-2 transition-colors ${isSelected ? 'bg-white border-white text-blue-600' : 'border-gray-300 dark:border-gray-500'}`}>
+                                  {isSelected && <CheckSquare className="w-3 h-3" />}
+                                </div>
+                                <span className="truncate">{c.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-3 font-medium flex items-center gap-1">
+                          <Info className="w-3.5 h-3.5" /> เลือกหมวดหมู่ที่เกี่ยวข้องเพื่อเพิ่มโอกาสในการค้นพบ
+                        </p>
                       </div>
 
                       <div className="md:col-span-2">
@@ -1336,7 +1369,7 @@ export default function AdminPage() {
               {activeTab === 'tools' && aiTools.map((tool) => (
                 <div
                   key={tool.id}
-                  className={`group bg-white dark:bg-gray-800 rounded-3xl border ${selectedTools.includes(tool.id) ? 'border-[#0C2F53] dark:border-[#FFF200] ring-2 ring-[#0C2F53]/10 dark:ring-[#FFF200]/10' : 'border-gray-200 dark:border-gray-700'} p-6 hover:shadow-xl transition-all relative`}
+                  className={`group bg-white dark:bg-gray-800 rounded-[22px] border ${selectedTools.includes(tool.id) ? 'border-[#0C2F53] dark:border-[#FFF200] ring-2 ring-[#0C2F53]/10 dark:ring-[#FFF200]/10' : 'border-gray-200 dark:border-gray-700'} p-6 hover:shadow-xl transition-all relative`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-6">
@@ -1395,7 +1428,7 @@ export default function AdminPage() {
               {activeTab === 'prompts' && prompts.map((prompt) => (
                 <div
                   key={prompt.id}
-                  className={`group bg-white dark:bg-gray-800 rounded-3xl border ${selectedPrompts.includes(prompt.id) ? 'border-[#0C2F53] dark:border-[#FFF200] ring-2 ring-[#0C2F53]/10 dark:ring-[#FFF200]/10' : 'border-gray-200 dark:border-gray-700'} p-6 hover:shadow-xl transition-all relative`}
+                  className={`group bg-white dark:bg-gray-800 rounded-[22px] border ${selectedPrompts.includes(prompt.id) ? 'border-[#0C2F53] dark:border-[#FFF200] ring-2 ring-[#0C2F53]/10 dark:ring-[#FFF200]/10' : 'border-gray-200 dark:border-gray-700'} p-6 hover:shadow-xl transition-all relative`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-6">
@@ -1472,7 +1505,7 @@ export default function AdminPage() {
                       {categories.filter((c: any) => c.type === 'ai').map((cat: any) => (
                         <div
                           key={cat.id}
-                          className="group bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all"
+                          className="group bg-white dark:bg-gray-800 rounded-[22px] border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-6">
@@ -1522,7 +1555,7 @@ export default function AdminPage() {
                       {categories.filter((c: any) => c.type === 'prompt').map((cat: any) => (
                         <div
                           key={cat.id}
-                          className="group bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all"
+                          className="group bg-white dark:bg-gray-800 rounded-[22px] border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-6">

@@ -24,7 +24,7 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const API_URL = 'http://10.0.63.134:5000/api';
+const API_URL = 'http://localhost:5000/api';
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -147,8 +147,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateTool = async (id: string, updatedTool: Partial<AITool>) => {
     // find db_id if any (we stored it inside description dynamically sometimes, or injected in GET)
     const existing = aiTools.find(t => t.id === id);
-    const dbId = (existing as any)?.db_id || id;
+    const dbId = (existing as any)?.db_id;
 
+    if (!dbId) {
+      console.error('updateTool: ไม่พบ db_id สำหรับ id =', id, 'existing =', existing);
+      alert('เกิดข้อผิดพลาด: ไม่พบ ID ในฐานข้อมูลสำหรับ tool นี้ กรุณา refresh หน้าเว็บแล้วลองใหม่');
+      return;
+    }
+
+    console.log('updateTool: PUT /api/ais/' + dbId, updatedTool);
     const res = await fetch(`${API_URL}/ais/${dbId}`, {
       method: 'PUT',
       headers: getHeaders(),
@@ -156,6 +163,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     if (res.ok) {
       fetchData();
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      console.error('updateTool failed:', res.status, errData);
+      if (res.status === 401 || res.status === 403) {
+        alert('Session หมดอายุ กรุณา logout แล้ว login ใหม่');
+      } else {
+        alert(`บันทึกข้อมูลไม่สำเร็จ: ${res.status} ${errData.message || ''}`);
+      }
     }
   };
 
@@ -184,7 +199,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updatePrompt = async (id: string, updatedPrompt: Partial<AIPrompt>) => {
     const existing = prompts.find(p => p.id === id);
-    const dbId = (existing as any)?.db_id || id;
+    const dbId = (existing as any)?.db_id;
+
+    if (!dbId) {
+      console.error('updatePrompt: ไม่พบ db_id สำหรับ id =', id);
+      alert('เกิดข้อผิดพลาด: ไม่พบ ID ในฐานข้อมูลสำหรับ prompt นี้ กรุณา refresh หน้าเว็บแล้วลองใหม่');
+      return;
+    }
+
+    console.log('updatePrompt: PUT /api/prompts/' + dbId, updatedPrompt);
     const res = await fetch(`${API_URL}/prompts/${dbId}`, {
       method: 'PUT',
       headers: getHeaders(),
@@ -192,6 +215,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     if (res.ok) {
       fetchData();
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      console.error('updatePrompt failed:', res.status, errData);
+      if (res.status === 401 || res.status === 403) {
+        alert('Session หมดอายุ กรุณา logout แล้ว login ใหม่');
+      } else {
+        alert(`บันทึกข้อมูลไม่สำเร็จ: ${res.status} ${errData.message || ''}`);
+      }
     }
   };
 
@@ -219,6 +250,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const updateCategory = async (id: string, category: any) => {
+    console.log('updateCategory: PUT /api/categories/' + id, category);
     const res = await fetch(`${API_URL}/categories/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
@@ -226,6 +258,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     if (res.ok) {
       fetchData();
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      console.error('updateCategory failed:', res.status, errData);
+      if (res.status === 401 || res.status === 403) {
+        alert('Session หมดอายุ กรุณา logout แล้ว login ใหม่');
+      } else {
+        alert(`บันทึกข้อมูลไม่สำเร็จ: ${res.status} ${errData.message || ''}`);
+      }
     }
   };
 

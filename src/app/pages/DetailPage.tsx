@@ -74,7 +74,7 @@ export default function DetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-slate-200 font-sans selection:bg-white/30 relative overflow-hidden">
+    <div className="min-h-screen bg-black text-slate-200 selection:bg-white/30 relative overflow-hidden">
       <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-white/50 z-[100] origin-left mix-blend-difference"
         style={{ scaleX: stepsProgress }}
@@ -116,8 +116,9 @@ export default function DetailPage() {
             >
               <div className="relative w-[320px] h-[180px] md:w-[512px] md:h-[288px] flex items-center justify-center overflow-visible">
                 <div className="absolute inset-0 bg-blue-500/30 blur-[80px] rounded-[2rem]" />
+                
                 {tool.imageUrl ? (
-                  <div className="w-full h-full bg-[#0a0a0a] rounded-[2rem] relative z-10 drop-shadow-[0_0_40px_rgba(255,255,255,0.15)] flex items-center justify-center border border-white/10 overflow-hidden group">
+                  <div className="w-full h-full bg-[#0a0a0a] rounded-[2rem] relative z-10 drop-shadow-[0_0_40px_rgba(255,255,255,0.15)] flex items-center justify-center overflow-hidden group border border-white/10">
                     <img
                       src={tool.imageUrl}
                       alt={`${tool.name} logo`}
@@ -125,7 +126,7 @@ export default function DetailPage() {
                     />
                   </div>
                 ) : (
-                  <div className="w-full h-full bg-[#1a1a1a] rounded-[2rem] relative z-10 flex items-center justify-center border border-white/10 shadow-2xl">
+                  <div className="w-full h-full bg-[#1a1a1a] rounded-[2rem] relative z-10 flex items-center justify-center shadow-2xl border border-white/10">
                     <Fingerprint className="w-24 h-24 text-slate-500" />
                   </div>
                 )}
@@ -150,9 +151,20 @@ export default function DetailPage() {
                 <span className="px-5 py-2 rounded-full text-sm font-semibold backdrop-blur-md bg-white/10 text-white border border-white/20">
                   {tool.price === 'Free' ? 'ฟรี' : tool.price === 'Paid' ? 'เสียเงิน' : 'ฟรี + เสียเงิน'}
                 </span>
-                <span className="px-5 py-2 rounded-full text-sm font-semibold backdrop-blur-md bg-white/10 text-white border border-white/20 uppercase tracking-widest text-[10px]">
-                  {categories.find((c: any) => c.category_id === tool.category)?.name || tool.category}
-                </span>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <span className="px-5 py-2 rounded-full text-sm font-semibold backdrop-blur-md bg-white/10 text-white border border-white/20 uppercase tracking-widest text-[10px]">
+                    {categories.find((c: any) => c.category_id === tool.category)?.name || tool.category}
+                  </span>
+                  {tool.categoryIds?.map(catId => {
+                    if (catId === tool.category) return null;
+                    const catName = categories.find((c: any) => c.category_id === catId)?.name || catId;
+                    return (
+                      <span key={catId} className="px-5 py-2 rounded-full text-sm font-semibold backdrop-blur-md bg-white/10 text-white border border-white/20 uppercase tracking-widest text-[10px]">
+                        {catName}
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
             </motion.div>
 
