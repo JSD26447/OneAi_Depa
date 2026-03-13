@@ -83,6 +83,23 @@ export default function HomePage() {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
+  const floatingSymbols = useMemo(() => {
+    const symbols = ['~', '{ }', '< >', '/', ';', ':', '=', '+', '-', '(', ')', '[ ]', '</>', '{}', '();', '=>'];
+    return Array.from({ length: 24 }).map((_, i) => ({
+      id: i,
+      symbol: symbols[Math.floor(Math.random() * symbols.length)],
+      top: `${Math.random() * 100}%`,
+      left: `${Math.random() * 100}%`,
+      fontSize: `${Math.random() * 1.5 + 0.75}rem`,
+      animationDuration: `${Math.random() * 5 + 5}s`,
+      animationDelay: `-${Math.random() * 5}s`,
+      opacity: Math.random() * 0.15 + 0.05,
+      x: `${(Math.random() - 0.5) * 60}px`,
+      y: `${(Math.random() - 0.5) * 60}px`,
+      rot: `${(Math.random() - 0.5) * 30}deg`,
+    }));
+  }, []);
+
   const toggleGroup = (groupName: string) => {
     setExpandedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
   };
@@ -259,6 +276,37 @@ export default function HomePage() {
         style={{ backgroundImage: "url('/images/hero-bg.jpg')" }}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-[#0C2F53]/90 via-[#0C2F53]/80 to-[#0C2F53]/95 backdrop-blur-[1px] z-0" />
+
+        <style>
+          {`
+            @keyframes drift {
+              0%, 100% { transform: translate(0, 0) rotate(0deg); }
+              50% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)); }
+            }
+          `}
+        </style>
+
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden mix-blend-screen">
+          {floatingSymbols.map((item, i) => (
+            <div
+              key={item.id}
+              className={`absolute text-[#FFF200] font-mono leading-none ${i >= 10 ? 'hidden sm:block' : ''}`}
+              style={{
+                top: item.top,
+                left: item.left,
+                fontSize: item.fontSize,
+                opacity: item.opacity,
+                animation: `drift ${item.animationDuration} ease-in-out infinite`,
+                animationDelay: item.animationDelay,
+                '--tx': item.x,
+                '--ty': item.y,
+                '--rot': item.rot,
+              } as React.CSSProperties}
+            >
+              {item.symbol}
+            </div>
+          ))}
+        </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col items-center text-center">

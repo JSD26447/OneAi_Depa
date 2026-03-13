@@ -571,98 +571,61 @@ export default function DetailPage() {
             )}
           </motion.section>
 
-          {/* 7. CTA Section - Premium Visual Flare */}
+          {/* 7. CTA Section - Redesigned for Premium Impact */}
           <motion.section
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
+            initial={{ opacity: 0, y: 100 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1 }}
-            className="relative pt-32 pb-64 text-center overflow-visible"
+            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+            className="relative py-32 md:py-48 px-6 overflow-hidden flex flex-col items-center"
           >
-            {/* Animated Ambient Orbs */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none z-0">
-              <motion.div
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.15, 0.3, 0.15],
-                  x: [-20, 20, -20],
-                  y: [-20, 20, -20],
-                }}
-                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute top-0 left-1/4 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-blue-600/20 blur-[120px] rounded-full"
-              />
-              <motion.div
-                animate={{
-                  scale: [1.2, 1, 1.2],
-                  opacity: [0.1, 0.2, 0.1],
-                  x: [20, -20, 20],
-                  y: [20, -20, 20],
-                }}
-                transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute bottom-0 right-1/4 w-[250px] md:w-[500px] h-[250px] md:h-[500px] bg-purple-600/20 blur-[120px] rounded-full"
-              />
+            {/* Background Effects */}
+            <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-blue-600/20 to-purple-600/20 blur-[120px] rounded-full opacity-50" />
             </div>
 
-            <div className="relative z-10 max-w-5xl mx-auto flex flex-col items-center px-6">
-              <motion.div
-                initial={{ y: 60, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <h2 className="text-5xl md:text-7xl lg:text-[8rem] font-black text-white tracking-tighter mb-10 leading-[0.9] inline-block">
-                  พร้อมที่จะลอง<br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-white to-purple-400 bg-[length:200%_auto] animate-gradient-x font-black">
-                    {tool.name}
-                  </span>
-                  <br />แล้วหรือยัง?
-                </h2>
-              </motion.div>
-
-              <motion.p
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                className="text-xl md:text-2xl text-slate-400 mb-16 max-w-2xl font-medium tracking-tight"
-              >
-                ก้าวข้ามขีดจำกัดเดิมๆ และปลดล็อกศักยภาพในตัวคุณด้วยพลังของ AI ที่ออกแบบมาเพื่อคุณโดยเฉพาะ
-              </motion.p>
-
-              {/* Magnetic Interactive Button */}
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="relative group"
-              >
-                <div className="absolute inset-0 bg-white/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative z-10 w-full max-w-4xl text-center space-y-12">
+              <div className="space-y-4">
+                <motion.span
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2 }}
+                  className="inline-block px-5 py-2 rounded-full text-xs font-bold bg-white/5 border border-white/10 text-white/50 uppercase tracking-[0.2em] mb-4"
+                >
+                  Next Step
+                </motion.span>
                 
-                <a
+                <h2 className="text-5xl md:text-8xl font-black text-white tracking-tighter leading-[0.85]">
+                  เริ่มต้นการเดินทาง <br />
+                  ของคุณกับ <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-200 to-purple-400">{tool.name}</span>
+                </h2>
+              </div>
+
+              <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed tracking-tight">
+                ก้าวข้ามขีดจำกัดเดิมๆ และปลดล็อกศักยภาพในตัวคุณด้วยพลังของ AI ที่ออกแบบมาเพื่อคุณโดยเฉพาะ
+              </p>
+
+              <div className="flex flex-col md:flex-row items-center justify-center gap-6 pt-8">
+                <motion.a
                   href={tool.officialWebsite}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="relative inline-flex items-center justify-center bg-white text-black px-12 py-6 rounded-full font-bold text-xl md:text-2xl transition-all duration-300 shadow-[0_20px_50px_rgba(255,255,255,0.1)] group-hover:shadow-[0_20px_60px_rgba(255,255,255,0.2)] overflow-hidden"
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group relative flex items-center gap-4 bg-white text-black px-10 py-5 rounded-2xl font-bold text-lg md:text-xl shadow-[0_20px_40px_rgba(255,255,255,0.1)] transition-all duration-300"
                 >
-                  <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
-                  
-                  <span className="relative flex items-center gap-3">
-                    ไปที่เว็บไซต์อย่างเป็นทางการ
-                    <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" />
-                  </span>
-                </a>
-              </motion.div>
+                  <span>ไปที่เว็บไซต์ทางการ</span>
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </motion.a>
+              </div>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1, delay: 1 }}
-                className="mt-32 flex items-center gap-2 text-white/20 font-medium tracking-widest text-[10px] uppercase"
-              >
-                <div className="w-8 h-px bg-white/10" />
-                Powered by depa AI Ecosystem
-                <div className="w-8 h-px bg-white/10" />
-              </motion.div>
+              <div className="pt-24 flex flex-col items-center gap-4">
+                <div className="w-12 h-px bg-white/10" />
+                <p className="text-[10px] uppercase font-bold tracking-[0.3em] text-white/20">
+                  Powered by depa AI Ecosystem
+                </p>
+              </div>
             </div>
           </motion.section>
 
