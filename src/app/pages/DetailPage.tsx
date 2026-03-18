@@ -49,7 +49,7 @@ export default function DetailPage() {
 
   useEffect(() => {
     if (tool) {
-      const mid = Math.floor((tool.plans?.length || 1) / 2);
+      const mid = Math.floor(((tool.plans && tool.plans.length) || 1) / 2);
       setActiveIndex(mid);
     }
   }, [id, tool]);
@@ -70,6 +70,19 @@ export default function DetailPage() {
       </div>
     );
   }
+
+  // Safety defaults for missing fields
+  const whatItDoes = tool.whatItDoes || [];
+  const howToUse = tool.howToUse || [];
+  const useCases = tool.useCases || [];
+  const plans = tool.plans || [];
+  const difficulty = tool.difficulty || 'Beginner';
+  const difficultyExplanation = tool.difficultyExplanation || tool.description || '';
+  const price = tool.price || 'Free';
+  const pricingDetails = tool.pricingDetails || '';
+  const orgSuitability = tool.orgSuitability || '';
+  const tagline = tool.tagline || tool.description || '';
+  const officialWebsite = tool.officialWebsite || '#';
 
   const difficultyLabels = {
     Beginner: 'ระดับ: เริ่มต้น',
@@ -145,15 +158,15 @@ export default function DetailPage() {
                 {tool.name}
               </h1>
               <p className="text-lg md:text-3xl text-white/70 max-w-3xl font-medium tracking-tight mb-8">
-                {tool.tagline}
+                {tagline}
               </p>
 
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <span className="px-5 py-2 rounded-full text-sm font-semibold backdrop-blur-md bg-white/10 text-white border border-white/20">
-                  {difficultyLabels[tool.difficulty]}
+                  {difficultyLabels[difficulty]}
                 </span>
                 <span className="px-5 py-2 rounded-full text-sm font-semibold backdrop-blur-md bg-white/10 text-white border border-white/20">
-                  {tool.price === 'Free' ? 'ฟรี' : tool.price === 'Paid' ? 'เสียเงิน' : 'ฟรี + เสียเงิน'}
+                  {price === 'Free' ? 'ฟรี' : price === 'Paid' ? 'เสียเงิน' : 'ฟรี + เสียเงิน'}
                 </span>
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   <span className="px-5 py-2 rounded-full text-sm font-semibold backdrop-blur-md bg-white/10 text-white border border-white/20 uppercase tracking-widest text-[10px]">
@@ -203,7 +216,7 @@ export default function DetailPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-              {tool.whatItDoes.map((item, index) => {
+              {whatItDoes.map((item, index) => {
                 const gradients = [
                   "from-blue-500 to-cyan-400",
                   "from-purple-500 to-pink-500",
@@ -261,7 +274,7 @@ export default function DetailPage() {
               <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-4">วิธีใช้งาน.</h2>
             </div>
             <div className="space-y-6">
-              {tool.howToUse.map((step, index) => (
+              {howToUse.map((step, index) => (
                 <motion.div
                   initial={{ opacity: 0, y: 60, filter: "blur(10px)" }}
                   whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -299,7 +312,7 @@ export default function DetailPage() {
                   ตัวอย่างการใช้งานจริง
                 </h2>
                 <ul className="space-y-6">
-                  {tool.useCases.map((useCase, index) => (
+                  {useCases.map((useCase, index) => (
                     <li key={index} className="flex items-start gap-4">
                       <div className="w-2 h-2 rounded-full bg-emerald-400 mt-3 flex-shrink-0 shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
                       <span className="text-xl md:text-2xl text-white/80 leading-snug font-medium tracking-tight">{useCase}</span>
@@ -322,10 +335,10 @@ export default function DetailPage() {
                   <Layers className="w-8 h-8" />
                 </div>
                 <h2 className="text-3xl md:text-5xl font-bold text-white mb-8 tracking-tight leading-tight">
-                  ทำไมถึงเป็น <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">{difficultyLabels[tool.difficulty]}</span>?
+                  ทำไมถึงเป็น <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">{difficultyLabels[difficulty]}</span>?
                 </h2>
                 <p className="text-xl md:text-2xl text-white/70 leading-relaxed font-medium tracking-tight">
-                  {tool.difficultyExplanation}
+                  {difficultyExplanation}
                 </p>
               </div>
             </motion.section>
@@ -341,11 +354,11 @@ export default function DetailPage() {
           >
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-4">แพ็กเกจ & ราคา (รายเดือน)</h2>
-              <p className="text-xl text-slate-400 text-center max-w-2xl mx-auto">{tool.pricingDetails}</p>
+              <p className="text-xl text-slate-400 text-center max-w-2xl mx-auto">{pricingDetails}</p>
             </div>
 
-            {tool.plans && tool.plans.length > 0 && (
-              tool.plans.length > 2 ? (
+            {plans.length > 0 && (
+              plans.length > 2 ? (
                 /* === COVERFLOW MODE (> 2 plans) === */
                 <div
                   className="relative select-none"
@@ -358,7 +371,7 @@ export default function DetailPage() {
                     if (!isDragging.current || dragStartX.current === null) return;
                     const diff = dragStartX.current - e.clientX;
                     if (Math.abs(diff) > 50) {
-                      if (diff > 0 && activeIndex < (tool.plans?.length ?? 0) - 1) {
+                      if (diff > 0 && activeIndex < plans.length - 1) {
                         setActiveIndex(i => i + 1);
                         dragStartX.current = null;
                         isDragging.current = false;
@@ -385,7 +398,7 @@ export default function DetailPage() {
                     if (!isDragging.current || dragStartX.current === null) return;
                     const diff = dragStartX.current - e.touches[0].clientX;
                     if (Math.abs(diff) > 40) {
-                      if (diff > 0 && activeIndex < (tool.plans?.length ?? 0) - 1) {
+                      if (diff > 0 && activeIndex < plans.length - 1) {
                         setActiveIndex(i => i + 1);
                         dragStartX.current = null;
                         isDragging.current = false;
@@ -410,14 +423,14 @@ export default function DetailPage() {
                   </button>
                   <button
                     onClick={() => setActiveIndex(i => Math.min((tool.plans?.length ?? 1) - 1, i + 1))}
-                    disabled={activeIndex === (tool.plans?.length ?? 1) - 1}
+                    disabled={activeIndex === plans.length - 1}
                     className="absolute right-0 top-1/2 -translate-y-1/2 z-30 translate-x-2 md:translate-x-6 w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-xl"
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
 
                   <div className="flex items-center justify-center gap-4 py-14 px-16 overflow-hidden">
-                    {tool.plans.map((plan, idx) => {
+                    {plans.map((plan, idx) => {
                       const offset = idx - activeIndex;
                       const isActive = offset === 0;
                       const isVisible = Math.abs(offset) <= 2;
@@ -499,14 +512,14 @@ export default function DetailPage() {
                     })}
                   </div>
                   <div className="flex justify-center gap-2 mt-2">
-                    {tool.plans.map((_, idx) => (
+                    {plans.map((_, idx) => (
                       <button key={idx} onClick={() => setActiveIndex(idx)} className={`rounded-full transition-all duration-300 ${idx === activeIndex ? 'bg-white w-6 h-2' : 'bg-white/30 w-2 h-2'}`} />
                     ))}
                   </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {tool.plans.map((plan, idx) => {
+                  {plans.map((plan, idx) => {
                     const isPopular = plan.name.toLowerCase().includes('pro') || plan.name.toLowerCase().includes('premium') || plan.name.toLowerCase().includes('standard');
                     return (
                     <motion.div
@@ -552,7 +565,7 @@ export default function DetailPage() {
               )
             )}
 
-            {tool.orgSuitability && (
+            {orgSuitability && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
@@ -565,7 +578,7 @@ export default function DetailPage() {
                 </div>
                 <div>
                   <h4 className="text-white text-xl font-bold mb-2 tracking-tight">คำแนะนำสำหรับองค์กร</h4>
-                  <p className="text-white/70 text-lg leading-relaxed">{tool.orgSuitability}</p>
+                  <p className="text-white/70 text-lg leading-relaxed">{orgSuitability}</p>
                 </div>
               </motion.div>
             )}
@@ -608,7 +621,7 @@ export default function DetailPage() {
 
               <div className="flex flex-col md:flex-row items-center justify-center gap-6 pt-8">
                 <motion.a
-                  href={tool.officialWebsite}
+                  href={officialWebsite}
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.05, y: -5 }}

@@ -14,7 +14,8 @@ import {
     X,
     Users,
     Palette,
-    Map
+    Map,
+    Search
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -42,8 +43,14 @@ const iconMap: Record<string, any> = {
 export default function Sidebar({ open, onClose, selectedCategory, onCategoryClick, type, itemCount }: SidebarProps) {
     const location = useLocation();
     const { categories: allCategories } = useApp();
-    const currentCategories = allCategories.filter((c: any) => c.type === (type === 'tools' ? 'ai' : 'prompt'));
+    const [categorySearchQuery, setCategorySearchQuery] = useState('');
     const [isChildVisible, setIsChildVisible] = useState(true);
+
+    const currentCategories = allCategories
+        .filter((c: any) => c.type === (type === 'tools' ? 'ai' : 'prompt'))
+        .filter((c: any) =>
+            (c.name || '').toLowerCase().includes(categorySearchQuery.toLowerCase())
+        );
 
     return (
         <>
@@ -101,6 +108,29 @@ export default function Sidebar({ open, onClose, selectedCategory, onCategoryCli
                             >
                                 <X className="w-5 h-5" />
                             </button>
+                        </div>
+
+                        {/* Category Search Input */}
+                        <div className="mb-6 relative group">
+                            <div className="absolute inset-0 bg-blue-500/5 dark:bg-blue-400/5 rounded-xl blur-md opacity-0 group-focus-within:opacity-100 transition-opacity" />
+                            <div className="relative">
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 group-focus-within:text-[#0C2F53] dark:group-focus-within:text-[#FFF200] transition-colors" />
+                                <input
+                                    type="text"
+                                    placeholder="ค้นหาหมวดหมู่..."
+                                    value={categorySearchQuery}
+                                    onChange={(e) => setCategorySearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FFF200]/50 focus:border-[#FFF200] dark:focus:border-[#FFF200] transition-all text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 font-medium"
+                                />
+                                {categorySearchQuery && (
+                                    <button
+                                        onClick={() => setCategorySearchQuery('')}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                    >
+                                        <X className="w-3 h-3" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         <nav className="space-y-2">

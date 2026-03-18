@@ -776,7 +776,7 @@ export default function AdminPage() {
                         </label>
                         <textarea
                           required
-                          value={toolFormData.bestFor.join('\n')}
+                          value={(toolFormData.bestFor || []).join('\n')}
                           onChange={(e) => handleToolArrayInput('bestFor', e.target.value)}
                           placeholder="พนักงานออฟฟิศ&#10;นักการตลาด&#10;นักออกแบบ"
                           rows={3}
@@ -791,7 +791,7 @@ export default function AdminPage() {
                         </label>
                         <textarea
                           required
-                          value={toolFormData.whatItDoes.join('\n')}
+                          value={(toolFormData.whatItDoes || []).join('\n')}
                           onChange={(e) => handleToolArrayInput('whatItDoes', e.target.value)}
                           placeholder="เขียนอีเมล&#10;สร้างคอนเทนต์"
                           rows={4}
@@ -805,7 +805,7 @@ export default function AdminPage() {
                         </label>
                         <textarea
                           required
-                          value={toolFormData.whoItsFor.join('\n')}
+                          value={(toolFormData.whoItsFor || []).join('\n')}
                           onChange={(e) => handleToolArrayInput('whoItsFor', e.target.value)}
                           placeholder="คนที่ต้องการ...&#10;ทีมการตลาด"
                           rows={4}
@@ -819,7 +819,7 @@ export default function AdminPage() {
                         </label>
                         <textarea
                           required
-                          value={toolFormData.useCases.join('\n')}
+                          value={(toolFormData.useCases || []).join('\n')}
                           onChange={(e) => handleToolArrayInput('useCases', e.target.value)}
                           placeholder="เขียนอีเมลอย่างมืออาชีพ&#10;ร่างสัญญา"
                           rows={4}
@@ -833,7 +833,7 @@ export default function AdminPage() {
                         </label>
                         <textarea
                           required
-                          value={toolFormData.howToUse.map(step => step.text).join('\n')}
+                          value={(toolFormData.howToUse || []).map(step => step.text).join('\n')}
                           onChange={(e) => handleToolStepsInput(e.target.value)}
                           placeholder="1. สมัครบัญชี&#10;2. พิมพ์คำถาม"
                           rows={4}
@@ -1051,7 +1051,7 @@ export default function AdminPage() {
                         </label>
                         <input
                           type="text"
-                          value={promptFormData.tags.join(', ')}
+                          value={(promptFormData.tags || []).join(', ')}
                           onChange={(e) => handlePromptArrayInput('tags', e.target.value)}
                           placeholder="Meeting, Minutes, Summary"
                           className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"

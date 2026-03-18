@@ -186,62 +186,140 @@ export default function PromptsPage() {
                                                                 </span>
                                                             ) : null}
                                                             {p.aiRecommendations && p.aiRecommendations.length > 0 ? (
-                                                                p.aiRecommendations.map((rec, i) => (
-                                                                    <a
-                                                                        key={i}
-                                                                        href={rec.url ? (rec.url.startsWith('http') ? rec.url : `https://${rec.url}`) : '#'}
-                                                                        target={rec.url ? "_blank" : undefined}
-                                                                        rel="noopener noreferrer"
-                                                                        title={rec.url ? `ไปยังเว็บไซต์ ${rec.name}` : undefined}
-                                                                        className={`px-3 py-1 ${rec.url ? 'bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 hover:text-blue-700 cursor-pointer border border-blue-200 dark:border-blue-700/50 hover:border-blue-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 cursor-default'} rounded-full text-xs font-bold tracking-wider transition-all inline-flex items-center gap-1`}
-                                                                    >
-                                                                        {rec.url && <span className="text-[9px]">↗</span>}
-                                                                        {rec.name}
-                                                                    </a>
-                                                                ))
-                                                            ) : p.tags && p.tags.map(tag => {
-                                                                const matchedTool = aiTools.find(
-                                                                    tool => tool.name.toLowerCase().includes(tag.toLowerCase()) ||
-                                                                        tag.toLowerCase().includes(tool.name.toLowerCase())
-                                                                );
+                                                                p.aiRecommendations.map((rec, i) => {
+                                                                    const getBrandStyle = (t: string) => {
+                                                                        const lowerT = t.toLowerCase();
+                                                                        if (lowerT.includes('chatgpt') || lowerT === 'gpt') return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800/50 hover:bg-emerald-100 hover:border-emerald-400';
+                                                                        if (lowerT.includes('gemini')) return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800/50 hover:bg-blue-100 hover:border-blue-400';
+                                                                        if (lowerT.includes('claude') || lowerT.includes('claud')) return 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800/50 hover:bg-orange-100 hover:border-orange-400';
+                                                                        if (lowerT.includes('deepseek') || lowerT.includes('deepsix')) return 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800/50 hover:bg-indigo-100 hover:border-indigo-400';
+                                                                        return 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700/50 hover:bg-blue-100 hover:border-blue-400';
+                                                                    };
+                                                                    const brandStyle = getBrandStyle(rec.name);
 
-                                                                const getFallbackUrl = (t: string) => {
-                                                                    const lowerT = t.toLowerCase();
-                                                                    if (lowerT.includes('midjourney')) return 'https://www.midjourney.com/';
-                                                                    if (lowerT.includes('stable diffusion')) return 'https://stability.ai/';
-                                                                    if (lowerT.includes('chatgpt')) return 'https://chat.openai.com/';
-                                                                    if (lowerT.includes('gemini')) return 'https://gemini.google.com/';
-                                                                    if (lowerT.includes('claude')) return 'https://claude.ai/';
-                                                                    if (lowerT.includes('copilot')) return 'https://copilot.microsoft.com/';
-                                                                    if (lowerT.includes('perplexity')) return 'https://www.perplexity.ai/';
-                                                                    if (lowerT.includes('github') || lowerT.includes('copilot')) return 'https://github.com/features/copilot';
-                                                                    return null;
-                                                                };
-
-                                                                const targetUrl = matchedTool?.officialWebsite || getFallbackUrl(tag);
-
-                                                                if (targetUrl) {
                                                                     return (
                                                                         <a
-                                                                            key={tag}
-                                                                            href={targetUrl}
-                                                                            target="_blank"
+                                                                            key={i}
+                                                                            href={rec.url ? (rec.url.startsWith('http') ? rec.url : `https://${rec.url}`) : '#'}
+                                                                            target={rec.url ? "_blank" : undefined}
                                                                             rel="noopener noreferrer"
-                                                                            title={`ไปยังเว็บไซต์ ${tag}`}
-                                                                            className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 hover:text-blue-700 rounded-full text-xs font-bold tracking-wider transition-all cursor-pointer inline-flex items-center gap-1 border border-blue-200 dark:border-blue-700/50 hover:border-blue-400"
+                                                                            title={rec.url ? `ไปยังเว็บไซต์ ${rec.name}` : undefined}
+                                                                            className={`px-3 py-1 ${rec.url ? `${brandStyle} cursor-pointer border` : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 cursor-default'} rounded-full text-xs font-bold tracking-wider transition-all inline-flex items-center gap-1`}
                                                                         >
-                                                                            <span className="text-[9px]">↗</span>
-                                                                            {tag}
+                                                                            {rec.url && <span className="text-[9px]">↗</span>}
+                                                                            {rec.name}
                                                                         </a>
                                                                     );
-                                                                }
+                                                                })
+                                                            ) : p.tags && p.tags
+                                                                .filter(tag => {
+                                                                    const getFallbackUrl = (t: string) => {
+                                                                        const lowerT = t.toLowerCase();
+                                                                        if (lowerT.includes('midjourney')) return 'https://www.midjourney.com/';
+                                                                        if (lowerT.includes('stable diffusion')) return 'https://stability.ai/';
+                                                                        if (lowerT.includes('chatgpt') || lowerT === 'gpt') return 'https://chat.openai.com/';
+                                                                        if (lowerT.includes('gemini')) return 'https://gemini.google.com/';
+                                                                        if (lowerT.includes('claude') || lowerT.includes('claud')) return 'https://claude.ai/';
+                                                                        if (lowerT.includes('copilot')) return 'https://copilot.microsoft.com/';
+                                                                        if (lowerT.includes('perplexity')) return 'https://www.perplexity.ai/';
+                                                                        if (lowerT.includes('dall')) return 'https://openai.com/dall-e-3';
+                                                                        if (lowerT.includes('canva')) return 'https://www.canva.com/ai-image-generator/';
+                                                                        if (lowerT.includes('leonardo')) return 'https://leonardo.ai/';
+                                                                        if (lowerT.includes('runway')) return 'https://runwayml.com/';
+                                                                        if (lowerT.includes('pika')) return 'https://pika.art/';
+                                                                        if (lowerT.includes('suno')) return 'https://suno.com/';
+                                                                        if (lowerT.includes('udio')) return 'https://www.udio.com/';
+                                                                        if (lowerT.includes('mistral')) return 'https://mistral.ai/';
+                                                                        if (lowerT.includes('llama')) return 'https://llama.meta.com/';
+                                                                        if (lowerT.includes('grok')) return 'https://x.ai/';
+                                                                        if (lowerT.includes('deepseek') || lowerT.includes('deepsix')) return 'https://www.deepseek.com/';
+                                                                        if (lowerT.includes('github') || lowerT.includes('copilot')) return 'https://github.com/features/copilot';
+                                                                        return null;
+                                                                    };
+                                                                    // กรองเอาเฉพาะแท็กที่มีลิงก์ AI (กันข้อความคีย์เวิร์ดหลุดมา)
+                                                                    const matchedTool = aiTools.find(
+                                                                        tool => tool.name.toLowerCase().includes(tag.toLowerCase()) ||
+                                                                            tag.toLowerCase().includes(tool.name.toLowerCase())
+                                                                    );
+                                                                    return !!(matchedTool?.officialWebsite || getFallbackUrl(tag));
+                                                                })
+                                                                .map(tag => {
+                                                                    const matchedTool = aiTools.find(
+                                                                        tool => tool.name.toLowerCase().includes(tag.toLowerCase()) ||
+                                                                            tag.toLowerCase().includes(tool.name.toLowerCase())
+                                                                    );
 
-                                                                return (
-                                                                    <span key={tag} className="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-bold tracking-wider">
-                                                                        {tag}
-                                                                    </span>
-                                                                );
-                                                            })}
+                                                                    const getBrandStyle = (t: string) => {
+                                                                        const lowerT = t.toLowerCase();
+                                                                        if (lowerT.includes('chatgpt') || lowerT === 'gpt') {
+                                                                            return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800/50 hover:bg-emerald-100 hover:border-emerald-400';
+                                                                        }
+                                                                        if (lowerT.includes('gemini')) {
+                                                                            return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800/50 hover:bg-blue-100 hover:border-blue-400';
+                                                                        }
+                                                                        if (lowerT.includes('claude') || lowerT.includes('claud')) {
+                                                                            return 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800/50 hover:bg-orange-100 hover:border-orange-400';
+                                                                        }
+                                                                        if (lowerT.includes('deepseek') || lowerT.includes('deepsix')) {
+                                                                            return 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800/50 hover:bg-indigo-100 hover:border-indigo-400';
+                                                                        }
+                                                                        if (lowerT.includes('perplexity')) {
+                                                                            return 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:border-cyan-800/50 hover:bg-cyan-100 hover:border-cyan-400';
+                                                                        }
+                                                                        if (lowerT.includes('midjourney')) {
+                                                                            return 'bg-slate-900 text-white border-slate-800 dark:bg-slate-700 dark:text-white dark:border-slate-600 hover:bg-slate-800';
+                                                                        }
+                                                                        if (lowerT.includes('stable diffusion')) {
+                                                                            return 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800/50 hover:bg-purple-100 hover:border-purple-400';
+                                                                        }
+                                                                        return 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700/50 hover:bg-blue-100 hover:border-blue-400';
+                                                                    };
+
+                                                                    const getFallbackUrl = (t: string) => {
+                                                                        const lowerT = t.toLowerCase();
+                                                                        if (lowerT.includes('midjourney')) return 'https://www.midjourney.com/';
+                                                                        if (lowerT.includes('stable diffusion')) return 'https://stability.ai/';
+                                                                        if (lowerT.includes('chatgpt') || lowerT === 'gpt') return 'https://chat.openai.com/';
+                                                                        if (lowerT.includes('gemini')) return 'https://gemini.google.com/';
+                                                                        if (lowerT.includes('claude') || lowerT.includes('claud')) return 'https://claude.ai/';
+                                                                        if (lowerT.includes('copilot')) return 'https://copilot.microsoft.com/';
+                                                                        if (lowerT.includes('perplexity')) return 'https://www.perplexity.ai/';
+                                                                        if (lowerT.includes('dall')) return 'https://openai.com/dall-e-3';
+                                                                        if (lowerT.includes('canva')) return 'https://www.canva.com/ai-image-generator/';
+                                                                        if (lowerT.includes('leonardo')) return 'https://leonardo.ai/';
+                                                                        if (lowerT.includes('runway')) return 'https://runwayml.com/';
+                                                                        if (lowerT.includes('pika')) return 'https://pika.art/';
+                                                                        if (lowerT.includes('suno')) return 'https://suno.com/';
+                                                                        if (lowerT.includes('udio')) return 'https://www.udio.com/';
+                                                                        if (lowerT.includes('mistral')) return 'https://mistral.ai/';
+                                                                        if (lowerT.includes('llama')) return 'https://llama.meta.com/';
+                                                                        if (lowerT.includes('grok')) return 'https://x.ai/';
+                                                                        if (lowerT.includes('deepseek') || lowerT.includes('deepsix')) return 'https://www.deepseek.com/';
+                                                                        if (lowerT.includes('github') || lowerT.includes('copilot')) return 'https://github.com/features/copilot';
+                                                                        return null;
+                                                                    };
+
+                                                                    const targetUrl = matchedTool?.officialWebsite || getFallbackUrl(tag);
+                                                                    const brandStyle = getBrandStyle(tag);
+
+                                                                    if (targetUrl) {
+                                                                        return (
+                                                                            <a
+                                                                                key={tag}
+                                                                                href={targetUrl}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                title={`ไปยังเว็บไซต์ ${tag}`}
+                                                                                className={`px-3 py-1 ${brandStyle} rounded-full text-xs font-bold tracking-wider transition-all cursor-pointer inline-flex items-center gap-1 border`}
+                                                                            >
+                                                                                <span className="text-[9px]">↗</span>
+                                                                                {tag}
+                                                                            </a>
+                                                                        );
+                                                                    }
+
+                                                                    return null;
+                                                                })}
                                                         </div>
                                                         {p.author && (
                                                             <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-semibold shadow-sm border border-indigo-100 dark:border-indigo-800/50">
