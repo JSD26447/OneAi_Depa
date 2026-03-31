@@ -102,9 +102,9 @@ app.get('/api/ais', async (req, res) => {
 
             try {
                 const parsed = JSON.parse(row.description);
-                return { ...parsed, id: row.id.toString(), db_id: row.id, provider: row.provider || parsed.provider || parsed.developer || "", imageUrl: getImageUrl(row.logo_url || parsed.imageUrl || ""), isDepaRecommended: !!row.is_depa_recommended };
+                return { ...parsed, id: row.id.toString(), db_id: row.id, provider: row.provider || parsed.provider || parsed.developer || "", imageUrl: getImageUrl(row.logo_url || parsed.imageUrl || ""), isDepaRecommended: !!row.is_depa_recommended, view_count: row.view_count || 0 };
             } catch (e) {
-                return { id: row.id.toString(), db_id: row.id, name: row.name, description: row.description, link: row.link, provider: row.provider || "", imageUrl: getImageUrl(row.logo_url || ""), isDepaRecommended: !!row.is_depa_recommended };
+                return { id: row.id.toString(), db_id: row.id, name: row.name, description: row.description, link: row.link, provider: row.provider || "", imageUrl: getImageUrl(row.logo_url || ""), isDepaRecommended: !!row.is_depa_recommended, view_count: row.view_count || 0 };
             }
         });
         res.status(200).json(formattedRows);
@@ -236,9 +236,9 @@ app.get('/api/prompts', async (req, res) => {
         const formattedRows = rows.map(row => {
             try {
                 const parsed = JSON.parse(row.content);
-                return { ...parsed, db_id: row.id, id: row.id.toString(), ai_id: row.ai_id };
+                return { ...parsed, db_id: row.id, id: row.id.toString(), ai_id: row.ai_id, copy_count: row.copy_count || 0 };
             } catch (e) {
-                return { db_id: row.id, id: row.id.toString(), title: row.title, prompt: row.content, ai_id: row.ai_id, tags: [], category: "writing" };
+                return { db_id: row.id, id: row.id.toString(), title: row.title, prompt: row.content, ai_id: row.ai_id, tags: [], category: "writing", copy_count: row.copy_count || 0 };
             }
         });
         res.status(200).json(formattedRows);
@@ -286,6 +286,29 @@ app.delete('/api/prompts/:id', verifyToken, async (req, res) => {
     try {
         await db.query('DELETE FROM prompts WHERE id = ?', [req.params.id]);
         res.status(200).json({ message: "Prompt deleted successfully!" });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// ==========================================
+// 4. Analytics endpoints
+// ==========================================
+// Public: เพิ่ม View Count สำหรับ AI
+app.post('/api/analytics/ais/:id/view', async (req, res) => {
+    try {
+        await db.query('UPDATE ais SET view_count = view_count + 1 WHERE id = ?', [req.params.id]);
+        res.status(200).json({ success: true });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Public: เพิ่ม Copy Count สำหรับ Prompt
+app.post('/api/analytics/prompts/:id/copy', async (req, res) => {
+    try {
+        await db.query('UPDATE prompts SET copy_count = copy_count + 1 WHERE id = ?', [req.params.id]);
+        res.status(200).json({ success: true });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

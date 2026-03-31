@@ -312,22 +312,22 @@ export default function HomePage() {
           <div className="flex flex-col items-center text-center">
             <div className="mb-6 space-y-0 leading-[0.8]">
               <h2 className="text-6xl sm:text-8xl md:text-8xl font-black text-white tracking-tighter drop-shadow-2xl italic">
-                ONE AI DISCOVERY
+                ONE AI
               </h2>
               <h2 className="text-6xl sm:text-8xl md:text-7.5xl font-black text-[#FFF200] tracking-tighter drop-shadow-2xl ml-4 sm:ml-8 italic">
-                ROADMAP_
+                DIRECTORY
               </h2>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-0 mb-12 transform -rotate-1">
               <div className="bg-[#FFF200] px-6 py-2 shadow-lg">
                 <span className="text-[#0C2F53] font-black text-sm sm:text-lg uppercase tracking-widest whitespace-nowrap">
-                  THE WORLD WAITS FOR NO ONE
+                  Choose the right tools,
                 </span>
               </div>
               <div className="bg-[#0C2F53]/80 backdrop-blur-md px-6 py-2 border-2 border-[#FFF200] shadow-lg">
                 <span className="text-white font-bold text-sm sm:text-lg uppercase tracking-widest whitespace-nowrap">
-                  YOUR DIGITAL VISA TO THE FUTURE
+                  use them with certainty
                 </span>
               </div>
             </div>

@@ -7,8 +7,14 @@ import { motion, useScroll, useTransform } from 'motion/react';
 export default function DetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { aiTools, categories } = useApp();
+  const { aiTools, categories, recordAiView } = useApp();
   const tool = aiTools.find(t => t.id === id);
+
+  useEffect(() => {
+    if (tool && (tool as any).db_id) {
+       recordAiView((tool as any).db_id);
+    }
+  }, [(tool as any)?.db_id]);
 
   // 1. Hero Apple Sticky Scroll Sequence
   const heroRef = useRef<HTMLDivElement>(null);

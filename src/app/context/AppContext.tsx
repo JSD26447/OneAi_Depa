@@ -20,6 +20,8 @@ interface AppContextType {
   addCategory: (category: any) => Promise<void>;
   updateCategory: (id: string, category: any) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
+  recordAiView: (db_id: number) => Promise<void>;
+  recordPromptCopy: (db_id: number) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -92,6 +94,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // Fallback to static data if backend is offline
       setAiTools(initialAiTools);
       setPrompts(initialPrompts);
+    }
+  };
+
+  const recordAiView = async (db_id: number) => {
+    try {
+      await fetch(`${API_URL}/analytics/ais/${db_id}/view`, { method: 'POST' });
+    } catch (e) {
+      console.error("Failed to record AI view", e);
+    }
+  };
+
+  const recordPromptCopy = async (db_id: number) => {
+    try {
+      await fetch(`${API_URL}/analytics/prompts/${db_id}/copy`, { method: 'POST' });
+    } catch (e) {
+      console.error("Failed to record Prompt copy", e);
     }
   };
 
@@ -298,7 +316,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         categories,
         addCategory,
         updateCategory,
-        deleteCategory
+        deleteCategory,
+        recordAiView,
+        recordPromptCopy
       }}
     >
       {children}

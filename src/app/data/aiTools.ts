@@ -22,6 +22,7 @@ export interface AITool {
   plans?: AIToolPlan[];
   orgSuitability?: string;
   isDepaRecommended?: boolean;
+  view_count?: number;
 }
 
 export interface AIToolPlan {

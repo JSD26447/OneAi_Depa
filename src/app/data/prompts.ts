@@ -8,6 +8,7 @@ export interface AIPrompt {
     tags: string[];
     author?: string;
     aiRecommendations?: { name: string; url: string; }[];
+    copy_count?: number;
 }
 
 export const promptCategories = [

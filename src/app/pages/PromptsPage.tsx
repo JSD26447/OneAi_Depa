@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 export default function PromptsPage() {
-    const { prompts, aiTools, categories } = useApp();
+    const { prompts, aiTools, categories, recordPromptCopy } = useApp();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -32,12 +32,17 @@ export default function PromptsPage() {
             );
         }
         return filtered;
-    }, [selectedCategory, searchQuery]);
+    }, [selectedCategory, searchQuery, prompts]);
 
     const handleCopy = (id: string, text: string) => {
         navigator.clipboard.writeText(text);
         setCopiedId(id);
         setTimeout(() => setCopiedId(null), 2000);
+
+        const prompt = prompts.find(p => p.id === id);
+        if (prompt && (prompt as any).db_id) {
+            recordPromptCopy((prompt as any).db_id);
+        }
     };
 
     return (
@@ -95,22 +100,22 @@ export default function PromptsPage() {
                     <div className="flex flex-col items-center text-center">
                         <div className="mb-6 space-y-0 leading-[0.8]">
                             <h2 className="text-5xl sm:text-7xl md:text-8xl font-black text-white tracking-tighter drop-shadow-2xl italic">
-                                AI PROMPT
+                                ONE AI
                             </h2>
                             <h2 className="text-5xl sm:text-7xl md:text-8xl font-black text-[#FFF200] tracking-tighter drop-shadow-2xl ml-4 sm:ml-8 italic">
-                                ENGINEER_
+                                PROMPTLY
                             </h2>
                         </div>
 
                         <div className="flex flex-wrap items-center justify-center gap-0 mb-12 transform -rotate-1">
                             <div className="bg-[#FFF200] px-6 py-2 shadow-lg">
                                 <span className="text-[#0C2F53] font-black text-sm sm:text-lg uppercase tracking-widest whitespace-nowrap">
-                                    UNLOCK THE POWER
+                                    Shape your ideas into success.
                                 </span>
                             </div>
                             <div className="bg-[#0C2F53]/80 backdrop-blur-md px-6 py-2 border-2 border-[#FFF200] shadow-lg">
                                 <span className="text-white font-bold text-sm sm:text-lg uppercase tracking-widest whitespace-nowrap">
-                                    OF GENERATIVE AI
+                                    Curated for your excellence:
                                 </span>
                             </div>
                         </div>

@@ -18,6 +18,7 @@ import {
   Image as ImageIcon,
   DollarSign,
   Link as LinkIcon,
+  BarChart3,
   CheckSquare,
   Cpu,
   Layers,
@@ -444,6 +445,13 @@ export default function AdminPage() {
                   </button>
                 </div>
 
+                <button
+                  onClick={() => navigate('/admin/dashboard')}
+                  className="flex items-center gap-2 bg-blue-500 text-white px-6 py-2 rounded-xl hover:bg-blue-600 transition-all font-bold shadow-lg shadow-blue-500/10"
+                >
+                  <BarChart3 className="w-5 h-5" />
+                  Dashboard
+                </button>
                 <button
                   onClick={() => setShowForm(true)}
                   className="flex items-center gap-2 bg-[#FFF200] text-[#0C2F53] px-6 py-2 rounded-xl hover:bg-[#FFC600] transition-all font-bold shadow-lg shadow-[#FFF200]/10"
@@ -1054,6 +1062,19 @@ export default function AdminPage() {
                           value={(promptFormData.tags || []).join(', ')}
                           onChange={(e) => handlePromptArrayInput('tags', e.target.value)}
                           placeholder="Meeting, Minutes, Summary"
+                          className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                          ผู้แต่ง (Author) <span className="text-gray-400 font-normal ml-1">(ตัวเลือก)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={promptFormData.author || ''}
+                          onChange={(e) => handlePromptInputChange('author', e.target.value)}
+                          placeholder="เช่น Somchai Jaidee"
                           className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
                         />
                       </div>
