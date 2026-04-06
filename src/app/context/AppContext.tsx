@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { aiTools as initialAiTools, AITool } from '../data/aiTools';
 import { aiPrompts as initialPrompts, AIPrompt } from '../data/prompts';
+import { initialCategories } from '../data/categories';
 
 interface AppContextType {
   theme: 'light' | 'dark';
@@ -78,22 +79,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // Refetch after seed
         const newToolRes = await fetch(`${API_URL}/ais`);
         const newToolData = await newToolRes.json();
-        setAiTools(newToolData);
+        setAiTools(newToolData.length > 0 ? newToolData : initialAiTools);
 
         const newPromptRes = await fetch(`${API_URL}/prompts`);
         const newPromptData = await newPromptRes.json();
-        setPrompts(newPromptData);
-        setCategories(catData);
+        setPrompts(newPromptData.length > 0 ? newPromptData : initialPrompts);
+        setCategories(catData.length > 0 ? catData : initialCategories);
       } else {
         setAiTools(toolData);
         setPrompts(promptData);
-        setCategories(catData);
+        setCategories(catData.length > 0 ? catData : initialCategories);
       }
     } catch (err) {
       console.error("Failed to fetch data", err);
       // Fallback to static data if backend is offline
       setAiTools(initialAiTools);
       setPrompts(initialPrompts);
+      setCategories(initialCategories);
     }
   };
 
