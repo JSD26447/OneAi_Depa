@@ -727,7 +727,7 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ปัจจุบันเปิดให้ใช้งานฟรี',
     officialWebsite: 'https://notebooklm.google.com/',
     logo: 'BookOpen',
-    imageUrl: '',
+    imageUrl: '/images/notebooklm.png',
   },
   {
     id: 'creative-imagen3',
@@ -746,7 +746,7 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ใช้งานได้ฟรีผ่านบริการของ Google เช่น Gemini และ ImageFX',
     officialWebsite: 'https://deepmind.google/technologies/imagen-3/',
     logo: 'Image',
-    imageUrl: '',
+    imageUrl: '/images/imagen3.png',
   },
   {
     id: 'coding-idx',
@@ -765,7 +765,7 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ปัจจุบันอยู่ในช่วง Preview และให้ใช้งานได้ฟรี',
     officialWebsite: 'https://idx.dev/',
     logo: 'Code2',
-    imageUrl: '',
+    imageUrl: '/images/project-idx.png',
   },
   {
     id: 'doc-deepseek',
@@ -784,7 +784,7 @@ export const aiTools: AITool[] = [
     pricingDetails: 'มีทั้งเวอร์ชันฟรีและ API สำหรับการใช้งานระดับสูง',
     officialWebsite: 'https://www.deepseek.com/',
     logo: 'Zap',
-    imageUrl: '',
+    imageUrl: '/images/deepseek.png',
   },
   {
     id: 'doc-perplexity',
@@ -803,7 +803,7 @@ export const aiTools: AITool[] = [
     pricingDetails: 'เวอร์ชันฟรีใช้งานได้ดี มี Pro สำหรับโมเดลที่ฉลาดขึ้นและเข้าถึงไฟล์ได้มากขึ้น',
     officialWebsite: 'https://www.perplexity.ai/',
     logo: 'Search',
-    imageUrl: '',
+    imageUrl: '/images/perplexity.png',
   },
   {
     id: 'coding-aistudio',
@@ -822,7 +822,7 @@ export const aiTools: AITool[] = [
     pricingDetails: 'เปิดให้ใช้งานฟรีตามโควตาที่กำหนด (Free of charge in certain limits)',
     officialWebsite: 'https://aistudio.google.com/',
     logo: 'Layout',
-    imageUrl: '',
+    imageUrl: '/images/google-ai-studio.png',
   },
   {
     id: 'plan-opal',
@@ -841,7 +841,7 @@ export const aiTools: AITool[] = [
     pricingDetails: 'มีเวอร์ชันฟรี และแบบพรีเมียมเพื่อฟีเจอร์การปรับแต่งที่ลึกขึ้น',
     officialWebsite: 'https://www.opal.so/',
     logo: 'ShieldCheck',
-    imageUrl: '',
+    imageUrl: '/images/opal.png',
   },
   {
     id: 'coding-github-copilot',
@@ -860,7 +860,7 @@ export const aiTools: AITool[] = [
     pricingDetails: 'มีค่าบริการรายเดือน (Individual/Business) โดยนักศึกษาและเจ้าของโปรเจกต์ Open Source ใช้งานฟรี',
     officialWebsite: 'https://github.com/features/copilot',
     logo: 'Code',
-    imageUrl: '',
+    imageUrl: '/images/github-copilot.png',
   },
   {
     id: 'creative-ms-designer',
@@ -879,7 +879,7 @@ export const aiTools: AITool[] = [
     pricingDetails: 'ปัจจุบันเปิดให้ใช้งานฟรีผ่านบัญชี Microsoft',
     officialWebsite: 'https://designer.microsoft.com/',
     logo: 'Palette',
-    imageUrl: '',
+    imageUrl: '/images/ms-designer.png',
   },
   {
     id: 'coding-azure-studio',
@@ -898,6 +898,6 @@ export const aiTools: AITool[] = [
     pricingDetails: 'คิดค่าบริการตามการใช้งาน (Pay-as-you-go) โดยมี Free Trial ให้ทดสอบ',
     officialWebsite: 'https://ai.azure.com/',
     logo: 'Cpu',
-    imageUrl: '',
+    imageUrl: '/images/azure-ai-studio.png',
   }
 ];
