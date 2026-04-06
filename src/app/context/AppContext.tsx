@@ -124,6 +124,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const login = async (username: string, password: string) => {
+    // โหมดใช้งานแบบไม่พึ่งฐานข้อมูล (Hardcoded Admin Login)
+    if (username === 'admindepa' && password === 'Depa@4321') {
+      localStorage.setItem('token', 'frontend-bypass-token');
+      setIsAdmin(true);
+      return true;
+    }
+
     try {
       const res = await fetch(`${API_URL}/login`, {
         method: 'POST',
